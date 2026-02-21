@@ -3,6 +3,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-
 import { useDroppable } from '@dnd-kit/core'
 import { Plus, MoreHorizontal } from 'lucide-react'
 import useStore from '../../store/store'
+import { useShallow } from 'zustand/react/shallow'
 import { useTasks } from '../../hooks/useTasks'
 import TaskCard from './TaskCard'
 
@@ -10,10 +11,10 @@ export default function KanbanColumn({ column, tasks }) {
   const [isAddingTask, setIsAddingTask] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const inputRef = useRef(null)
-  const { activeProjectId, user } = useStore((s) => ({
+  const { activeProjectId, user } = useStore(useShallow((s) => ({
     activeProjectId: s.activeProjectId,
     user: s.user,
-  }))
+  })))
   const { addTask } = useTasks()
 
   // Make column itself droppable (for dropping into empty columns)

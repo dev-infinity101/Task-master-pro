@@ -25,6 +25,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { searchTasks } from '../../lib/database'
 import useStore from '../../store/store'
+import { useShallow } from 'zustand/react/shallow'
 
 const PRIORITY_COLORS = {
   urgent: 'text-red-400',
@@ -50,7 +51,12 @@ export default function CommandPalette() {
   const inputRef = useRef(null)
   const debounceRef = useRef(null)
 
-  const { commandPaletteOpen, setCommandPaletteOpen, setAIPanelOpen, user } = useStore()
+  const { commandPaletteOpen, setCommandPaletteOpen, setAIPanelOpen, user } = useStore(useShallow((s) => ({
+    commandPaletteOpen: s.commandPaletteOpen,
+    setCommandPaletteOpen: s.setCommandPaletteOpen,
+    setAIPanelOpen: s.setAIPanelOpen,
+    user: s.user,
+  })))
   const navigate = useNavigate()
 
   // Open/close with Cmd+K
@@ -172,9 +178,9 @@ export default function CommandPalette() {
           {/* Search input */}
           <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-800">
             {isSearching ? (
-              <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+              <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin shrink-0" />
             ) : (
-              <Search className="w-4 h-4 text-slate-500 flex-shrink-0" />
+              <Search className="w-4 h-4 text-slate-500 shrink-0" />
             )}
             <input
               ref={inputRef}
@@ -217,12 +223,12 @@ export default function CommandPalette() {
                                 : 'text-slate-300 hover:bg-slate-800'
                             }`}
                           >
-                            <Flag className={`w-3.5 h-3.5 flex-shrink-0 ${PRIORITY_COLORS[item.priority ?? 'none']}`} />
+                            <Flag className={`w-3.5 h-3.5 shrink-0 ${PRIORITY_COLORS[item.priority ?? 'none']}`} />
                             <span className="flex-1 text-sm truncate">{item.label}</span>
                             {item.subtitle && (
                               <span className="text-xs text-slate-500">{item.subtitle}</span>
                             )}
-                            <ArrowRight className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
+                            <ArrowRight className="w-3.5 h-3.5 text-slate-600 shrink-0" />
                           </button>
                         )
                       })}
@@ -252,7 +258,7 @@ export default function CommandPalette() {
                                 : 'text-slate-300 hover:bg-slate-800'
                             }`}
                           >
-                            <div className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0">
+                            <div className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
                               {Icon && <Icon className="w-3.5 h-3.5 text-slate-400" />}
                             </div>
                             <span className="flex-1 text-sm">{item.label}</span>

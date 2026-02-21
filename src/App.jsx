@@ -14,10 +14,11 @@
  * - fake isAuthenticated boolean (replaced by real session)
  */
 
-import { useEffect } from 'react'
+import { useEffect, Component, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import useStore from './store/store'
+import { useShallow } from 'zustand/react/shallow'
 import { useAuth } from './hooks/useAuth'
 
 // Auth
@@ -31,7 +32,6 @@ import CommandPalette from './components/ui/CommandPalette'
 import AIAssistant from './components/ai/AIAssistant'
 
 // Pages (lazy-loaded for code splitting)
-import { lazy, Suspense } from 'react'
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Analytics  = lazy(() => import('./pages/Analytics'))
 const Settings   = lazy(() => import('./pages/Settings'))
@@ -42,8 +42,48 @@ const PageLoader = () => (
   </div>
 )
 
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error) {
+    console.error('Error boundary caught:', error)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center p-6">
+          <div className="max-w-md text-center">
+            <h1 className="text-xl font-semibold text-white mb-2">Something went wrong</h1>
+            <p className="text-sm text-slate-400 mb-6">Refresh the page to try again.</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
+            >
+              Reload
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
 export default function App() {
-  const { theme, setTheme } = useStore()
+  const { theme, setTheme } = useStore(useShallow((s) => ({
+    theme: s.theme,
+    setTheme: s.setTheme,
+  })))
   useAuth() // Initializes session and subscribes to auth changes
 
   // System theme detection
@@ -64,69 +104,71 @@ export default function App() {
   }, [theme])
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans antialiased">
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/auth/callback" element={<Navigate to="/dashboard" replace />} />
+    <ErrorBoundary>
+      <div className="min-h-screen bg-slate-950 text-slate-200 font-sans antialiased">
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/auth/callback" element={<Navigate to="/dashboard" replace />} />
 
-        {/* Protected routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<PageLoader />}>
-                <Dashboard />
-              </Suspense>
-            </ProtectedRoute>
-          }
+          {/* Protected routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<PageLoader />}>
+                  <Dashboard />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<PageLoader />}>
+                  <Analytics />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<PageLoader />}>
+                  <Settings />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Default redirect */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+
+        {/* Global overlays — rendered outside route components */}
+        <CommandPalette />
+        <AIAssistant />
+
+        {/* Toast notifications */}
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            style: {
+              background: '#1e293b',
+              border: '1px solid #334155',
+              color: '#e2e8f0',
+              borderRadius: '12px',
+            },
+            success: { iconTheme: { primary: '#10b981', secondary: '#1e293b' } },
+            error:   { iconTheme: { primary: '#ef4444', secondary: '#1e293b' } },
+          }}
+          richColors
         />
-        <Route
-          path="/analytics"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<PageLoader />}>
-                <Analytics />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<PageLoader />}>
-                <Settings />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Default redirect */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-
-      {/* Global overlays — rendered outside route components */}
-      <CommandPalette />
-      <AIAssistant />
-
-      {/* Toast notifications */}
-      <Toaster
-        position="bottom-right"
-        toastOptions={{
-          style: {
-            background: '#1e293b',
-            border: '1px solid #334155',
-            color: '#e2e8f0',
-            borderRadius: '12px',
-          },
-          success: { iconTheme: { primary: '#10b981', secondary: '#1e293b' } },
-          error:   { iconTheme: { primary: '#ef4444', secondary: '#1e293b' } },
-        }}
-        richColors
-      />
-    </div>
+      </div>
+    </ErrorBoundary>
   )
 }

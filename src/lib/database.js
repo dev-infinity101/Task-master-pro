@@ -47,6 +47,18 @@ export async function getSession() {
   return supabase.auth.getSession()
 }
 
+export async function resetPassword(email) {
+  if (!supabaseConfigured) return missingSupabase()
+  return supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/login`,
+  })
+}
+
+export async function updatePassword(password) {
+  if (!supabaseConfigured) return missingSupabase()
+  return supabase.auth.updateUser({ password })
+}
+
 // ─────────────────────────────────────────────
 // PROFILES
 // ─────────────────────────────────────────────
@@ -56,7 +68,7 @@ export async function getProfile(userId) {
     .from('profiles')
     .select('*')
     .eq('id', userId)
-    .single()
+    .maybeSingle()
 }
 
 export async function updateProfile(userId, updates) {
@@ -73,12 +85,19 @@ export async function updateProfile(userId, updates) {
 // ─────────────────────────────────────────────
 
 export async function getProjects(userId) {
-  return supabase
+  const { data, error } = await supabase
     .from('projects')
     .select('*')
     .eq('user_id', userId)
     .eq('archived', false)
     .order('position', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching projects:', error)
+    return { data: [], error }
+  }
+
+  return { data: data ?? [], error: null }
 }
 
 export async function createProject(userId, { name, color = '#6366f1', icon = 'folder' }) {

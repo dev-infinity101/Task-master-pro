@@ -26,14 +26,16 @@ import {
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/store'
-import { useAuth } from '../hooks/useAuth'
+import { useShallow } from 'zustand/react/shallow'
 import { useTasks } from '../hooks/useTasks'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
-import { getProjects, getColumns } from '../lib/database'
+import { getProjects, getColumns, signOut as dbSignOut } from '../lib/database'
 import KanbanBoard from '../components/kanban/KanbanBoard'
+import { toast } from 'sonner'
 
 export default function Dashboard() {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [projectsLoading, setProjectsLoading] = useState(false)
   const navigate = useNavigate()
 
   const {
@@ -46,6 +48,7 @@ export default function Dashboard() {
     wsConnected,
     sidebarOpen,
     activeView,
+    clearAuth,
     setProjects,
     setColumns,
     setActiveProject,
@@ -54,9 +57,27 @@ export default function Dashboard() {
     setActiveView,
     setSidebarOpen,
     getActiveProject,
-  } = useStore()
+  } = useStore(useShallow((s) => ({
+    user: s.user,
+    profile: s.profile,
+    projects: s.projects,
+    activeProjectId: s.activeProjectId,
+    columns: s.columns,
+    tasks: s.tasks,
+    wsConnected: s.wsConnected,
+    sidebarOpen: s.sidebarOpen,
+    activeView: s.activeView,
+    clearAuth: s.clearAuth,
+    setProjects: s.setProjects,
+    setColumns: s.setColumns,
+    setActiveProject: s.setActiveProject,
+    setCommandPaletteOpen: s.setCommandPaletteOpen,
+    setAIPanelOpen: s.setAIPanelOpen,
+    setActiveView: s.setActiveView,
+    setSidebarOpen: s.setSidebarOpen,
+    getActiveProject: s.getActiveProject,
+  })))
 
-  const { signOut } = useAuth()
   const { loadTasks } = useTasks()
 
   // Activate real WebSocket for active project
@@ -65,20 +86,56 @@ export default function Dashboard() {
   // Load projects on mount
   useEffect(() => {
     if (!user?.id) return
+    let mounted = true
     ;(async () => {
-      const { data } = await getProjects(user.id)
-      if (data) setProjects(data)
+      setProjectsLoading(true)
+      try {
+        const { data, error } = await getProjects(user.id)
+        if (!mounted) return
+        
+        if (error) {
+          toast.error('Failed to load projects')
+        } else if (data && data.length > 0) {
+          setProjects(data)
+          // Ensure active project is set if not already
+          if (!activeProjectId) {
+            setActiveProject(data[0].id)
+          }
+        } else {
+          setProjects([])
+        }
+      } catch (error) {
+        if (!mounted) return
+        console.error('Project load error:', error)
+        toast.error('Failed to load projects')
+      } finally {
+        if (mounted) setProjectsLoading(false)
+      }
     })()
-  }, [user?.id, setProjects])
+    return () => { mounted = false }
+  }, [user?.id, setProjects, activeProjectId, setActiveProject])
 
   // Load columns + tasks when active project changes
   useEffect(() => {
     if (!activeProjectId) return
+    let mounted = true
     ;(async () => {
-      const [colResult] = await Promise.all([getColumns(activeProjectId)])
-      if (colResult.data) setColumns(activeProjectId, colResult.data)
-      await loadTasks(activeProjectId)
+      try {
+        const [colResult] = await Promise.all([getColumns(activeProjectId)])
+        if (!mounted) return
+        
+        if (colResult.error) {
+          toast.error('Failed to load columns')
+        }
+        if (colResult.data) setColumns(activeProjectId, colResult.data)
+        await loadTasks(activeProjectId)
+      } catch (error) {
+        if (!mounted) return
+        console.error('Column/Task load error:', error)
+        toast.error('Failed to load board data')
+      }
     })()
+    return () => { mounted = false }
   }, [activeProjectId, setColumns, loadTasks])
 
   const activeProject = getActiveProject()
@@ -91,11 +148,20 @@ export default function Dashboard() {
     ? profile.full_name.charAt(0).toUpperCase()
     : user?.email?.charAt(0).toUpperCase() ?? '?'
 
+  const handleSignOut = async () => {
+    try {
+      await dbSignOut()
+    } finally {
+      clearAuth()
+      navigate('/login', { replace: true })
+    }
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-950">
       {/* ──────────── SIDEBAR ──────────── */}
       <aside
-        className={`flex-shrink-0 flex flex-col bg-slate-900 border-r border-slate-800 transition-all duration-300 ${
+        className={`shrink-0 flex flex-col bg-slate-900 border-r border-slate-800 transition-all duration-300 ${
           sidebarOpen ? 'w-60' : 'w-0 overflow-hidden'
         }`}
       >
@@ -119,7 +185,13 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {projects.map((project) => (
+            {projectsLoading && (
+              <div className="px-3 py-2 text-xs text-slate-500">Loading projects...</div>
+            )}
+            {!projectsLoading && projects.length === 0 && (
+              <div className="px-3 py-2 text-xs text-slate-500">No projects yet.</div>
+            )}
+            {!projectsLoading && projects.map((project) => (
               <button
                 key={project.id}
                 onClick={() => setActiveProject(project.id)}
@@ -130,7 +202,7 @@ export default function Dashboard() {
                 }`}
               >
                 <div
-                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  className="w-2 h-2 rounded-full shrink-0"
                   style={{ backgroundColor: project.color }}
                 />
                 <span className="truncate flex-1 text-left">{project.name}</span>
@@ -151,7 +223,7 @@ export default function Dashboard() {
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 transition-colors"
             >
-              <div className="w-7 h-7 bg-indigo-500 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+              <div className="w-7 h-7 bg-indigo-500 rounded-lg flex items-center justify-center text-xs font-bold text-white shrink-0">
                 {avatarText}
               </div>
               <div className="flex-1 min-w-0 text-left">
@@ -175,7 +247,7 @@ export default function Dashboard() {
                   </button>
                   <div className="h-px bg-slate-700 my-1" />
                   <button
-                    onClick={() => { signOut(); setUserMenuOpen(false) }}
+                    onClick={() => { handleSignOut(); setUserMenuOpen(false) }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-400 hover:bg-red-400/10 transition-colors"
                   >
                     <LogOut className="w-3.5 h-3.5" />

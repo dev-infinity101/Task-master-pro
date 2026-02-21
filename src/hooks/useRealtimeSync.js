@@ -31,11 +31,16 @@ export function markOwnUpdate(taskId) {
 
 export function useRealtimeSync(projectId) {
   const channelRef = useRef(null)
+  const projectsChannelRef = useRef(null)
   const {
+    user,
     realtimeUpsertTask,
     realtimeDeleteTask,
     setColumns,
     setWsConnected,
+    addProject,
+    updateProject,
+    removeProject,
   } = useStore()
 
   const handleTaskChange = useCallback(
@@ -70,6 +75,59 @@ export function useRealtimeSync(projectId) {
     },
     [projectId, setColumns]
   )
+
+  const handleProjectChange = useCallback(
+    (payload) => {
+      const { eventType, new: newRecord, old: oldRecord } = payload
+
+      if (eventType === 'INSERT') {
+        addProject(newRecord)
+      }
+
+      if (eventType === 'UPDATE') {
+        updateProject(newRecord.id, newRecord)
+      }
+
+      if (eventType === 'DELETE') {
+        removeProject(oldRecord.id)
+      }
+    },
+    [addProject, updateProject, removeProject]
+  )
+
+  useEffect(() => {
+    if (!user?.id) return
+
+    if (projectsChannelRef.current) {
+      supabase.removeChannel(projectsChannelRef.current)
+      projectsChannelRef.current = null
+    }
+
+    const channel = supabase
+      .channel(`user:${user.id}:projects`, {
+        config: { broadcast: { self: false } },
+      })
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'projects',
+          filter: `user_id=eq.${user.id}`,
+        },
+        handleProjectChange
+      )
+      .subscribe()
+
+    projectsChannelRef.current = channel
+
+    return () => {
+      if (projectsChannelRef.current) {
+        supabase.removeChannel(projectsChannelRef.current)
+        projectsChannelRef.current = null
+      }
+    }
+  }, [user?.id, handleProjectChange])
 
   useEffect(() => {
     if (!projectId) return

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { useAI } from '../../hooks/useAI'
 import useStore from '../../store/store'
+import { useShallow } from 'zustand/react/shallow'
 
 const SUGGESTED_PROMPTS = [
   { icon: Calendar, label: 'Plan my day', prompt: 'Based on my current tasks, help me plan what to focus on today.' },
@@ -42,7 +43,7 @@ function MessageBubble({ message, isStreaming = false, streamingContent = '' }) 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       {!isUser && (
-        <div className="w-7 h-7 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mr-2 flex-shrink-0 mt-0.5">
+        <div className="w-7 h-7 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mr-2 shrink-0 mt-0.5">
           <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
         </div>
       )}
@@ -71,7 +72,7 @@ function MessageBubble({ message, isStreaming = false, streamingContent = '' }) 
                   key={i}
                   className="flex items-start gap-2 text-xs bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2.5 py-2"
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-slate-200 font-medium">{action.title}</p>
                     {action.priority && action.priority !== 'none' && (
@@ -97,7 +98,11 @@ export default function AIAssistant() {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
-  const { aiPanelOpen, setAIPanelOpen, user } = useStore()
+  const { aiPanelOpen, setAIPanelOpen, user } = useStore(useShallow((s) => ({
+    aiPanelOpen: s.aiPanelOpen,
+    setAIPanelOpen: s.setAIPanelOpen,
+    user: s.user,
+  })))
   const { messages, isStreaming, streamingContent, sendMessage, cancelStream, clearMessages } =
     useAI()
 
@@ -149,7 +154,7 @@ export default function AIAssistant() {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <div className="shrink-0 w-8 h-8 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
@@ -181,7 +186,7 @@ export default function AIAssistant() {
           {messages.length === 0 ? (
             /* Empty state */
             <div className="flex flex-col items-center justify-center h-full text-center px-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/20 flex items-center justify-center mb-4">
+              <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/20 flex items-center justify-center mb-4">
                 <Sparkles className="w-7 h-7 text-indigo-400" />
               </div>
               <h4 className="text-white font-semibold mb-1">Hey, {firstName}! 👋</h4>
@@ -197,7 +202,7 @@ export default function AIAssistant() {
                     onClick={() => handleSuggestedPrompt(prompt)}
                     className="w-full flex items-center gap-3 px-4 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-xl text-left transition-all group"
                   >
-                    <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-500/20 transition-colors">
+                    <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 group-hover:bg-indigo-500/20 transition-colors">
                       <Icon className="w-3.5 h-3.5 text-indigo-400" />
                     </div>
                     <span className="text-sm text-slate-300 group-hover:text-white transition-colors">
@@ -258,7 +263,7 @@ export default function AIAssistant() {
             <button
               onClick={handleSend}
               disabled={!input.trim() || isStreaming}
-              className="flex-shrink-0 p-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+              className="shrink-0 p-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
             >
               <Send className="w-4 h-4" />
             </button>

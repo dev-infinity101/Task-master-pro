@@ -11,6 +11,7 @@ import {
   GripVertical,
 } from 'lucide-react'
 import useStore from '../../store/store'
+import { useShallow } from 'zustand/react/shallow'
 import { useTasks } from '../../hooks/useTasks'
 
 const PRIORITY_CONFIG = {
@@ -39,7 +40,10 @@ function formatDueDate(dateStr) {
 
 export default function TaskCard({ task, isDragging = false }) {
   const [showMenu, setShowMenu] = useState(false)
-  const { activeProjectId, getSubtasks } = useStore()
+  const { activeProjectId, getSubtasks } = useStore(useShallow((s) => ({
+    activeProjectId: s.activeProjectId,
+    getSubtasks: s.getSubtasks,
+  })))
   const { deleteTask, toggleTaskComplete } = useTasks()
 
   const subtasks = getSubtasks(task.id)

@@ -2,11 +2,16 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { User, Save, Loader2, Camera } from 'lucide-react'
 import useStore from '../store/store'
+import { useShallow } from 'zustand/react/shallow'
 import { updateProfile } from '../lib/database'
 import { toast } from 'sonner'
 
 export default function Settings() {
-  const { user, profile, setProfile } = useStore()
+  const { user, profile, setProfile } = useStore(useShallow((s) => ({
+    user: s.user,
+    profile: s.profile,
+    setProfile: s.setProfile,
+  })))
   const [isSaving, setIsSaving] = useState(false)
 
   const {

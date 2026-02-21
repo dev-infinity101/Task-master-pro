@@ -23,13 +23,18 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { createPortal } from 'react-dom'
 import useStore from '../../store/store'
+import { useShallow } from 'zustand/react/shallow'
 import { useTasks } from '../../hooks/useTasks'
 import KanbanColumn from './KanbanColumn'
 import TaskCard from './TaskCard'
 
 export default function KanbanBoard() {
   const [activeTask, setActiveTask] = useState(null)
-  const { activeProjectId, getTasksByColumn, getActiveColumns } = useStore()
+  const { activeProjectId, getTasksByColumn, getActiveColumns } = useStore(useShallow((s) => ({
+    activeProjectId: s.activeProjectId,
+    getTasksByColumn: s.getTasksByColumn,
+    getActiveColumns: s.getActiveColumns,
+  })))
   const { moveTask } = useTasks()
 
   const columns = getActiveColumns()

@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/package.json",
   "name": "taskmaster",
   "private": true,
   "version": "2.0.0",

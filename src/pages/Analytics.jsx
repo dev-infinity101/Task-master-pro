@@ -13,11 +13,15 @@ import {
 } from 'recharts'
 import { CheckCircle2, Clock, AlertCircle } from 'lucide-react'
 import useStore from '../store/store'
+import { useShallow } from 'zustand/react/shallow'
 
 const COLORS = ['#94a3b8', '#3b82f6', '#10b981', '#ef4444']
 
 export default function Analytics() {
-  const { tasks, activeProjectId } = useStore()
+  const { tasks, activeProjectId } = useStore(useShallow((s) => ({
+    tasks: s.tasks,
+    activeProjectId: s.activeProjectId,
+  })))
 
   const projectTasks = useMemo(() => {
     return tasks[activeProjectId] ?? []
