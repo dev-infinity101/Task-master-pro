@@ -80,6 +80,22 @@ export async function updateProfile(userId, updates) {
     .single()
 }
 
+export async function uploadAvatar(userId, file) {
+  if (!supabaseConfigured) return missingSupabase()
+  const extension = file.name?.split('.').pop() || 'png'
+  const path = `${userId}/${Date.now()}.${extension}`
+
+  const { data: uploaded, error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(path, file, { cacheControl: '3600', upsert: true, contentType: file.type })
+
+  if (uploadError) return { data: null, error: uploadError }
+
+  const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(uploaded.path)
+
+  return { data: { path: uploaded.path, publicUrl: publicUrlData?.publicUrl ?? null }, error: null }
+}
+
 // ─────────────────────────────────────────────
 // PROJECTS
 // ─────────────────────────────────────────────
