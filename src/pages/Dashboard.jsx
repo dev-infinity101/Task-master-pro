@@ -29,6 +29,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import YearProgressBanner from "@/components/ui/YearProgressBanner"
 import {
   Dialog,
   DialogContent,
@@ -523,12 +524,15 @@ export default function Dashboard() {
               <p className="text-muted-foreground max-w-sm">Choose a project from the sidebar to start managing your tasks.</p>
             </div>
           ) : (
-            <div className="h-full pt-6">
-              {activeView === 'list' ? (
-                <TaskListView />
-              ) : (
-                <KanbanBoard />
-              )}
+            <div className="h-full flex flex-col overflow-hidden">
+              <YearProgressBanner displayName={displayName} />
+              <div className="flex-1 overflow-hidden pt-2">
+                {activeView === 'list' ? (
+                  <TaskListView />
+                ) : (
+                  <KanbanBoard />
+                )}
+              </div>
             </div>
           )}
         </main>
