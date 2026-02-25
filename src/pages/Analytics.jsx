@@ -58,50 +58,50 @@ export default function Analytics() {
 
   if (!activeProjectId) {
     return (
-      <div className="flex h-full items-center justify-center text-slate-500">
+      <div className="flex h-full items-center justify-center text-muted-foreground">
         Please select a project to view analytics.
       </div>
     )
   }
 
   return (
-    <div className="p-8 space-y-8 overflow-y-auto h-full">
-      <h1 className="text-2xl font-bold text-white mb-6">Analytics Overview</h1>
+    <div className="p-8 space-y-8 overflow-y-auto h-full text-foreground">
+      <h1 className="text-2xl font-bold text-foreground mb-6">Analytics Overview</h1>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+        <div className="bg-card/70 dark:bg-linear-to-b dark:from-white/5 dark:to-transparent p-6 rounded-2xl border border-border backdrop-blur-sm">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-emerald-500/10 rounded-xl">
+            <div className="p-3 bg-muted/40 rounded-xl border border-border">
               <CheckCircle2 className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Completion Rate</p>
-              <p className="text-2xl font-bold text-white">{completionRate}%</p>
+              <p className="text-sm text-muted-foreground">Completion Rate</p>
+              <p className="text-2xl font-bold text-foreground">{completionRate}%</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+        <div className="bg-card/70 dark:bg-linear-to-b dark:from-white/5 dark:to-transparent p-6 rounded-2xl border border-border backdrop-blur-sm">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-500/10 rounded-xl">
+            <div className="p-3 bg-muted/40 rounded-xl border border-border">
               <Clock className="w-6 h-6 text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Total Tasks</p>
-              <p className="text-2xl font-bold text-white">{totalTasks}</p>
+              <p className="text-sm text-muted-foreground">Total Tasks</p>
+              <p className="text-2xl font-bold text-foreground">{totalTasks}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+        <div className="bg-card/70 dark:bg-linear-to-b dark:from-white/5 dark:to-transparent p-6 rounded-2xl border border-border backdrop-blur-sm">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-red-500/10 rounded-xl">
+            <div className="p-3 bg-muted/40 rounded-xl border border-border">
               <AlertCircle className="w-6 h-6 text-red-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Overdue</p>
-              <p className="text-2xl font-bold text-white">{overdueCount}</p>
+              <p className="text-sm text-muted-foreground">Overdue</p>
+              <p className="text-2xl font-bold text-foreground">{overdueCount}</p>
             </div>
           </div>
         </div>
@@ -110,8 +110,8 @@ export default function Analytics() {
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Status Distribution */}
-        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 h-[400px]">
-          <h3 className="text-lg font-semibold text-white mb-6">Task Status</h3>
+        <div className="bg-card/70 dark:bg-linear-to-b dark:from-white/5 dark:to-transparent p-6 rounded-2xl border border-border h-[400px] backdrop-blur-sm">
+          <h3 className="text-lg font-semibold text-foreground mb-6">Task Status</h3>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -128,7 +128,11 @@ export default function Analytics() {
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--popover))',
+                  borderColor: 'hsl(var(--border))',
+                  color: 'hsl(var(--popover-foreground))',
+                }}
               />
               <Legend />
             </PieChart>
@@ -136,15 +140,19 @@ export default function Analytics() {
         </div>
 
         {/* Priority Distribution */}
-        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 h-[400px]">
-          <h3 className="text-lg font-semibold text-white mb-6">Tasks by Priority</h3>
+        <div className="bg-card/70 dark:bg-linear-to-b dark:from-white/5 dark:to-transparent p-6 rounded-2xl border border-border h-[400px] backdrop-blur-sm">
+          <h3 className="text-lg font-semibold text-foreground mb-6">Tasks by Priority</h3>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={priorityData}>
-              <XAxis dataKey="name" stroke="#94a3b8" />
-              <YAxis stroke="#94a3b8" />
+              <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
+              <YAxis stroke="hsl(var(--muted-foreground))" />
               <Tooltip
-                cursor={{ fill: '#334155' }}
-                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
+                cursor={{ fill: 'hsl(var(--muted))' }}
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--popover))',
+                  borderColor: 'hsl(var(--border))',
+                  color: 'hsl(var(--popover-foreground))',
+                }}
               />
               <Bar dataKey="value" fill="#818cf8" radius={[4, 4, 0, 0]} />
             </BarChart>

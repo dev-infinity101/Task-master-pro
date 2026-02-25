@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
@@ -7,19 +6,27 @@ import {
   Flag,
   MoreVertical,
   Trash2,
-  Pencil,
-  GripVertical,
 } from 'lucide-react'
 import useStore from '../../store/store'
 import { useShallow } from 'zustand/react/shallow'
 import { useTasks } from '../../hooks/useTasks'
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 
 const PRIORITY_CONFIG = {
-  urgent: { label: 'Urgent', color: 'text-red-400', bg: 'bg-red-400/10', dot: 'bg-red-400' },
-  high:   { label: 'High',   color: 'text-orange-400', bg: 'bg-orange-400/10', dot: 'bg-orange-400' },
-  medium: { label: 'Medium', color: 'text-yellow-400', bg: 'bg-yellow-400/10', dot: 'bg-yellow-400' },
-  low:    { label: 'Low',    color: 'text-blue-400',   bg: 'bg-blue-400/10',   dot: 'bg-blue-400'   },
-  none:   { label: null,     color: '',                bg: '',                  dot: ''              },
+  urgent: { label: 'Urgent', color: 'text-destructive', border: 'border-l-destructive', bg: 'bg-destructive/10' },
+  high:   { label: 'High',   color: 'text-orange-500', border: 'border-l-orange-500', bg: 'bg-orange-500/10' },
+  medium: { label: 'Medium', color: 'text-yellow-500', border: 'border-l-yellow-500', bg: 'bg-yellow-500/10' },
+  low:    { label: 'Low',    color: 'text-blue-500',   border: 'border-l-blue-500',   bg: 'bg-blue-500/10' },
+  none:   { label: null,     color: '',                border: 'border-l-transparent', bg: '' },
 }
 
 function formatDueDate(dateStr) {
@@ -28,18 +35,16 @@ function formatDueDate(dateStr) {
   const now = new Date()
   const diffDays = Math.floor((date - now) / (1000 * 60 * 60 * 24))
 
-  if (diffDays < 0) return { text: 'Overdue', color: 'text-red-400', bg: 'bg-red-400/10' }
-  if (diffDays === 0) return { text: 'Today', color: 'text-amber-400', bg: 'bg-amber-400/10' }
-  if (diffDays === 1) return { text: 'Tomorrow', color: 'text-slate-300', bg: 'bg-slate-700/50' }
+  if (diffDays < 0) return { text: 'Overdue', className: 'text-destructive bg-destructive/10' }
+  if (diffDays === 0) return { text: 'Today', className: 'text-amber-500 bg-amber-500/10' }
+  if (diffDays === 1) return { text: 'Tomorrow', className: 'text-muted-foreground bg-secondary' }
   return {
     text: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    color: 'text-slate-400',
-    bg: 'bg-slate-700/50',
+    className: 'text-muted-foreground bg-secondary',
   }
 }
 
 export default function TaskCard({ task, isDragging = false }) {
-  const [showMenu, setShowMenu] = useState(false)
   const { activeProjectId, getSubtasks } = useStore(useShallow((s) => ({
     activeProjectId: s.activeProjectId,
     getSubtasks: s.getSubtasks,
@@ -68,7 +73,6 @@ export default function TaskCard({ task, isDragging = false }) {
 
   const handleDelete = async (e) => {
     e.stopPropagation()
-    setShowMenu(false)
     if (activeProjectId) {
       await deleteTask(task.id, activeProjectId)
     }
@@ -88,129 +92,92 @@ export default function TaskCard({ task, isDragging = false }) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`
-        group relative bg-slate-800 border rounded-xl p-3.5 cursor-default select-none
-        transition-all duration-150
-        ${isSortableDragging || isDragging
-          ? 'opacity-40 border-indigo-500 shadow-lg shadow-indigo-500/20 rotate-1 scale-105'
-          : 'border-slate-700 hover:border-slate-600 hover:shadow-md hover:shadow-black/20'}
-        ${isOptimistic ? 'opacity-70' : 'opacity-100'}
-        ${isDone ? 'opacity-60' : ''}
-      `}
+      className={cn(
+        "group relative touch-none outline-none",
+        isSortableDragging && "z-50 opacity-50",
+        isOptimistic && "opacity-70",
+        isDone && "opacity-60"
+      )}
+      {...attributes}
+      {...listeners}
     >
-      <div className="flex items-start gap-2.5">
-        {/* Drag Handle */}
-        <button
-          {...attributes}
-          {...listeners}
-          className="mt-0.5 shrink-0 text-slate-600 hover:text-slate-400 cursor-grab active:cursor-grabbing transition-colors opacity-0 group-hover:opacity-100"
-          tabIndex={-1}
-        >
-          <GripVertical className="w-3.5 h-3.5" />
-        </button>
-
-        {/* Completion checkbox */}
-        <button
-          onClick={handleToggleComplete}
-          className="mt-0.5 shrink-0 transition-transform hover:scale-110"
-        >
-          {isDone ? (
-            <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
-              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
+      <Card 
+        className={cn(
+          "relative overflow-hidden border-l-4 transition-all duration-200 hover:ring-1 hover:ring-primary/20 hover:shadow-md",
+          priority.border,
+          isDragging ? "shadow-xl scale-105 rotate-2 cursor-grabbing" : "cursor-grab active:cursor-grabbing",
+          "bg-card text-card-foreground"
+        )}
+      >
+        <CardContent className="p-3.5 space-y-2.5">
+          {/* Header: Title + Menu */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start gap-2.5 flex-1 min-w-0">
+              <button
+                onClick={handleToggleComplete}
+                className={cn(
+                  "mt-0.5 shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors",
+                  isDone 
+                    ? "bg-primary border-primary text-primary-foreground" 
+                    : "border-muted-foreground/40 hover:border-primary/50"
+                )}
+              >
+                {isDone && <CheckSquare className="w-3 h-3" />}
+              </button>
+              <h4 className={cn(
+                "text-sm font-medium leading-tight wrap-break-word",
+                isDone && "line-through text-muted-foreground"
+              )}>
+                {task.title}
+              </h4>
             </div>
-          ) : (
-            <div className="w-4 h-4 rounded-full border-2 border-slate-600 hover:border-emerald-500 transition-colors" />
-          )}
-        </button>
-
-        <div className="flex-1 min-w-0">
-          {/* Title */}
-          <p className={`text-sm font-medium leading-snug ${
-            isDone ? 'line-through text-slate-500' : 'text-slate-200'
-          }`}>
-            {task.title}
-          </p>
-
-          {/* Meta row */}
-          <div className="flex flex-wrap items-center gap-1.5 mt-2">
-            {/* Priority badge */}
-            {priority.label && (
-              <span className={`inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-md font-medium ${priority.color} ${priority.bg}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${priority.dot}`} />
-                {priority.label}
-              </span>
-            )}
-
-            {/* Due date */}
-            {dueInfo && (
-              <span className={`inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-md ${dueInfo.color} ${dueInfo.bg}`}>
-                <Calendar className="w-3 h-3" />
-                {dueInfo.text}
-              </span>
-            )}
-
-            {/* Subtask progress */}
-            {subtasks.length > 0 && (
-              <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-md text-slate-400 bg-slate-700/50">
-                <CheckSquare className="w-3 h-3" />
-                {completedSubtasks}/{subtasks.length}
-              </span>
-            )}
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6 -mr-1 -mt-1 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <MoreVertical className="w-3.5 h-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:text-destructive">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          {/* Tags */}
-          {task.tags?.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1.5">
-              {task.tags.slice(0, 3).map((tag) => (
-                <span
-                  key={tag}
-                  className="text-xs px-1.5 py-0.5 bg-indigo-500/10 text-indigo-400 rounded-md border border-indigo-500/20"
-                >
-                  {tag}
-                </span>
-              ))}
+          {/* Metadata Row */}
+          {(dueInfo || subtasks.length > 0 || task.priority !== 'none') && (
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {dueInfo && (
+                <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0 font-normal h-5 gap-1", dueInfo.className)}>
+                  <Calendar className="w-3 h-3" />
+                  {dueInfo.text}
+                </Badge>
+              )}
+              
+              {subtasks.length > 0 && (
+                <div className="flex items-center gap-1 text-[10px] text-muted-foreground bg-secondary/50 px-1.5 py-0.5 rounded-md h-5">
+                  <CheckSquare className="w-3 h-3" />
+                  <span>{completedSubtasks}/{subtasks.length}</span>
+                </div>
+              )}
+
+              {task.priority !== 'none' && (
+                <div className={cn("flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md h-5 font-medium", priority.color, priority.bg)}>
+                  <Flag className="w-3 h-3" />
+                  {priority.label}
+                </div>
+              )}
             </div>
           )}
-        </div>
-
-        {/* Context menu */}
-        <div className="relative shrink-0">
-          <button
-            onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu) }}
-            className="p-1 rounded-lg text-slate-600 hover:text-slate-300 hover:bg-slate-700 transition-all opacity-0 group-hover:opacity-100"
-          >
-            <MoreVertical className="w-3.5 h-3.5" />
-          </button>
-
-          {showMenu && (
-            <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setShowMenu(false)}
-              />
-              <div className="absolute right-0 top-6 z-20 bg-slate-800 border border-slate-700 rounded-xl shadow-xl py-1 min-w-[140px]">
-                <button
-                  onClick={(e) => { e.stopPropagation(); /* open edit modal */ setShowMenu(false) }}
-                  className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-700 transition-colors"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                  Edit task
-                </button>
-                <div className="h-px bg-slate-700 my-1" />
-                <button
-                  onClick={handleDelete}
-                  className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-red-400 hover:bg-red-400/10 transition-colors"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Delete
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

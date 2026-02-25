@@ -1,14 +1,3 @@
-/**
- * Dashboard.jsx — Main application view
- *
- * Replaces old Dashboard.jsx entirely.
- * - Loads projects + tasks on mount
- * - Activates Realtime WebSocket subscription for active project
- * - Renders Kanban board (or list view when added)
- * - Sidebar with project navigation
- * - Header with search/AI/user menu
- */
-
 import { useEffect, useState } from 'react'
 import {
   LayoutGrid,
@@ -22,20 +11,59 @@ import {
   Settings,
   Zap,
   FolderOpen,
+  Search,
+  Loader2
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/store'
 import { useShallow } from 'zustand/react/shallow'
 import { useTasks } from '../hooks/useTasks'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
-import { getProjects, getColumns, signOut as dbSignOut } from '../lib/database'
+import { getProjects, getColumns, createProjectWithDefaults, signOut as dbSignOut } from '../lib/database'
 import KanbanBoard from '../components/kanban/KanbanBoard'
+import TaskListView from '../components/list/TaskListView'
 import { toast } from 'sonner'
-import { Avatar, Badge, Button, IconButton, Surface } from '../components/ui/Primitives'
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+const PROJECT_COLORS = [
+  '#6366f1',
+  '#3b82f6',
+  '#06b6d4',
+  '#10b981',
+  '#f59e0b',
+  '#ef4444',
+  '#a855f7',
+  '#f97316',
+]
 
 export default function Dashboard() {
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [projectsLoading, setProjectsLoading] = useState(false)
+  const [createProjectOpen, setCreateProjectOpen] = useState(false)
+  const [isCreatingProject, setIsCreatingProject] = useState(false)
+  const [newProjectName, setNewProjectName] = useState('')
+  const [newProjectColor, setNewProjectColor] = useState(PROJECT_COLORS[0])
   const navigate = useNavigate()
 
   const {
@@ -43,7 +71,6 @@ export default function Dashboard() {
     profile,
     projects,
     activeProjectId,
-    columns,
     tasks,
     wsConnected,
     sidebarOpen,
@@ -62,7 +89,6 @@ export default function Dashboard() {
     profile: s.profile,
     projects: s.projects,
     activeProjectId: s.activeProjectId,
-    columns: s.columns,
     tasks: s.tasks,
     wsConnected: s.wsConnected,
     sidebarOpen: s.sidebarOpen,
@@ -87,31 +113,31 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user?.id) return
     let mounted = true
-    ;(async () => {
-      setProjectsLoading(true)
-      try {
-        const { data, error } = await getProjects(user.id)
-        if (!mounted) return
-        
-        if (error) {
-          toast.error('Failed to load projects')
-        } else if (data && data.length > 0) {
-          setProjects(data)
-          // Ensure active project is set if not already
-          if (!activeProjectId) {
-            setActiveProject(data[0].id)
+      ; (async () => {
+        setProjectsLoading(true)
+        try {
+          const { data, error } = await getProjects(user.id)
+          if (!mounted) return
+
+          if (error) {
+            toast.error('Failed to load projects')
+          } else if (data && data.length > 0) {
+            setProjects(data)
+            // Ensure active project is set if not already
+            if (!activeProjectId) {
+              setActiveProject(data[0].id)
+            }
+          } else {
+            setProjects([])
           }
-        } else {
-          setProjects([])
+        } catch (error) {
+          if (!mounted) return
+          console.error('Project load error:', error)
+          toast.error('Failed to load projects')
+        } finally {
+          if (mounted) setProjectsLoading(false)
         }
-      } catch (error) {
-        if (!mounted) return
-        console.error('Project load error:', error)
-        toast.error('Failed to load projects')
-      } finally {
-        if (mounted) setProjectsLoading(false)
-      }
-    })()
+      })()
     return () => { mounted = false }
   }, [user?.id, setProjects, activeProjectId, setActiveProject])
 
@@ -119,22 +145,22 @@ export default function Dashboard() {
   useEffect(() => {
     if (!activeProjectId) return
     let mounted = true
-    ;(async () => {
-      try {
-        const [colResult] = await Promise.all([getColumns(activeProjectId)])
-        if (!mounted) return
-        
-        if (colResult.error) {
-          toast.error('Failed to load columns')
+      ; (async () => {
+        try {
+          const [colResult] = await Promise.all([getColumns(activeProjectId)])
+          if (!mounted) return
+
+          if (colResult.error) {
+            toast.error('Failed to load columns')
+          }
+          if (colResult.data) setColumns(activeProjectId, colResult.data)
+          await loadTasks(activeProjectId)
+        } catch (error) {
+          if (!mounted) return
+          console.error('Column/Task load error:', error)
+          toast.error('Failed to load board data')
         }
-        if (colResult.data) setColumns(activeProjectId, colResult.data)
-        await loadTasks(activeProjectId)
-      } catch (error) {
-        if (!mounted) return
-        console.error('Column/Task load error:', error)
-        toast.error('Failed to load board data')
-      }
-    })()
+      })()
     return () => { mounted = false }
   }, [activeProjectId, setColumns, loadTasks])
 
@@ -144,19 +170,44 @@ export default function Dashboard() {
     (t) => t.due_date && new Date(t.due_date) < new Date()
   )
 
-  const taskList = tasks[activeProjectId] ?? []
-  const statusCounts = taskList.reduce(
-    (acc, t) => {
-      acc.total += 1
-      if (t.status === 'done') acc.done += 1
-      else if (t.status === 'in_progress') acc.inProgress += 1
-      else acc.todo += 1
-      return acc
-    },
-    { total: 0, todo: 0, inProgress: 0, done: 0 }
-  )
-  const progressPct = statusCounts.total > 0 ? Math.round((statusCounts.done / statusCounts.total) * 100) : 0
   const displayName = profile?.full_name ?? user?.email ?? 'Account'
+  const initials = displayName.charAt(0).toUpperCase()
+
+  const handleCreateProject = async (e) => {
+    e?.preventDefault?.()
+    if (!user?.id) return
+
+    const name = newProjectName.trim()
+    if (!name) return
+
+    setIsCreatingProject(true)
+    try {
+      const { data, error } = await createProjectWithDefaults(user.id, {
+        name,
+        color: newProjectColor,
+      })
+
+      if (error || !data?.project) {
+        toast.error(error?.message ?? 'Failed to create project')
+        return
+      }
+
+      const { project, columns } = data
+      setProjects([...projects, project])
+      setColumns(project.id, [...(columns ?? [])].sort((a, b) => a.position - b.position))
+      setActiveProject(project.id)
+
+      setCreateProjectOpen(false)
+      setNewProjectName('')
+      setNewProjectColor(PROJECT_COLORS[0])
+      toast.success('Project created')
+    } catch (error) {
+      console.error('Project create error:', error)
+      toast.error('Failed to create project')
+    } finally {
+      setIsCreatingProject(false)
+    }
+  }
 
   const handleSignOut = async () => {
     try {
@@ -168,246 +219,316 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-black text-white">
+    <div className="flex h-screen overflow-hidden bg-transparent text-foreground">
       {/* ──────────── SIDEBAR ──────────── */}
       <aside
-        className={`shrink-0 flex flex-col border-r border-white/10 bg-[#0B1220] transition-all duration-300 ${
-          sidebarOpen ? 'w-[240px]' : 'w-0 overflow-hidden'
-        }`}
+        className={`shrink-0 flex flex-col border-r bg-card/50 transition-all duration-300 ${sidebarOpen ? 'w-[260px]' : 'w-0 overflow-hidden'
+          }`}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-5 h-[60px] border-b border-white/10">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-blue-600 shadow-[0_10px_30px_rgba(37,99,235,0.25)]">
-            <Zap className="h-4 w-4 text-white" fill="currentColor" />
+        <div className="flex items-center gap-3 px-6 h-16 border-b">
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+            <Zap className="h-4 w-4" fill="currentColor" />
           </div>
           <div className="leading-tight">
-            <div className="text-sm font-bold text-white">TaskMaster</div>
-            <div className="text-xs text-slate-400">Workspace</div>
+            <div className="text-sm font-bold tracking-tight">TaskMaster</div>
+            <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Pro Workspace</div>
           </div>
         </div>
 
         {/* Projects */}
-        <div className="flex-1 overflow-y-auto py-4">
-          <div className="px-3 mb-2">
-            <div className="flex items-center justify-between px-2 mb-1">
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+        <ScrollArea className="flex-1 py-4">
+          <div className="px-4 mb-2">
+            <div className="flex items-center justify-between px-2 mb-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Projects
               </span>
-              <IconButton label="New project" className="h-8 w-8" onClick={() => toast('Project creation coming soon')}>
-                <Plus className="h-4 w-4" />
-              </IconButton>
+              <Dialog
+                open={createProjectOpen}
+                onOpenChange={(open) => {
+                  setCreateProjectOpen(open)
+                  if (open) {
+                    setNewProjectName('')
+                    setNewProjectColor(PROJECT_COLORS[0])
+                  }
+                }}
+              >
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create project</DialogTitle>
+                    <DialogDescription>Add a new project to organize your tasks.</DialogDescription>
+                  </DialogHeader>
+
+                  <form onSubmit={handleCreateProject} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="project-name">Name</Label>
+                      <Input
+                        id="project-name"
+                        value={newProjectName}
+                        onChange={(e) => setNewProjectName(e.target.value)}
+                        placeholder="e.g. Client work"
+                        autoFocus
+                        disabled={isCreatingProject}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Color</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {PROJECT_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            type="button"
+                            className={`h-7 w-7 rounded-full border ${newProjectColor === color
+                              ? 'ring-2 ring-ring ring-offset-2 ring-offset-background'
+                              : ''
+                              }`}
+                            style={{ backgroundColor: color }}
+                            onClick={() => setNewProjectColor(color)}
+                            aria-label={`Set project color ${color}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => setCreateProjectOpen(false)}
+                        disabled={isCreatingProject}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="gap-2"
+                        disabled={!newProjectName.trim() || isCreatingProject}
+                      >
+                        {isCreatingProject && <Loader2 className="h-4 w-4 animate-spin" />}
+                        Create
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
 
-            {projectsLoading && (
-              <div className="px-3 py-2 text-xs text-slate-500">Loading projects...</div>
-            )}
-            {!projectsLoading && projects.length === 0 && (
-              <div className="px-3 py-2 text-xs text-slate-500">No projects yet.</div>
-            )}
-            {!projectsLoading && projects.map((project) => (
-              <button
-                key={project.id}
-                onClick={() => setActiveProject(project.id)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all mb-1 ${
-                  activeProjectId === project.id
-                    ? 'bg-white/5 text-white border-l-4 border-blue-500'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border-l-4 border-transparent'
-                }`}
-              >
-                <div
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{ backgroundColor: project.color }}
-                />
-                <span className="truncate flex-1 text-left">{project.name}</span>
-                {activeProjectId === project.id && (
-                  <span className="text-xs text-slate-500">
-                    {(tasks[project.id] ?? []).filter((t) => t.status !== 'done').length}
-                  </span>
-                )}
-              </button>
-            ))}
+            <div className="space-y-1">
+              {projectsLoading && (
+                <div className="px-2 py-2 text-xs text-muted-foreground">Loading projects...</div>
+              )}
+              {!projectsLoading && projects.length === 0 && (
+                <div className="px-2 py-2 text-xs text-muted-foreground">No projects yet.</div>
+              )}
+              {!projectsLoading && projects.map((project) => (
+                <Button
+                  key={project.id}
+                  variant="ghost"
+                  onClick={() => setActiveProject(project.id)}
+                  className={`w-full justify-start gap-3 px-3 font-normal ${activeProjectId === project.id
+                    ? 'bg-accent text-accent-foreground border-l-2 border-primary rounded-l-none'
+                    : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                  <div
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: project.color }}
+                  />
+                  <span className="truncate flex-1 text-left">{project.name}</span>
+                  {activeProjectId === project.id && (
+                    <Badge variant="secondary" className="ml-auto text-[10px] h-5 px-1.5 min-w-5 justify-center">
+                      {(tasks[project.id] ?? []).filter((t) => t.status !== 'done').length}
+                    </Badge>
+                  )}
+                </Button>
+              ))}
+            </div>
           </div>
-        </div>
+        </ScrollArea>
 
         {/* Sidebar footer — user */}
-        <div className="border-t border-white/10 p-3">
-          <div className="relative">
-            <button
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors"
-            >
-              <Avatar name={displayName} src={profile?.avatar_url} className="h-8 w-8 rounded-lg" />
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-xs font-medium text-slate-200 truncate">
-                  {displayName}
-                </p>
-              </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
-            </button>
-
-            {userMenuOpen && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(false)} />
-                <div className="absolute bottom-12 left-0 right-0 z-20 bg-[#0B1220] border border-white/10 rounded-xl shadow-xl py-1">
-                  <button
-                    onClick={() => { navigate('/settings'); setUserMenuOpen(false) }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 transition-colors"
-                  >
-                    <Settings className="w-3.5 h-3.5" />
-                    Settings
-                  </button>
-                  <div className="h-px bg-white/10 my-1" />
-                  <button
-                    onClick={() => { handleSignOut(); setUserMenuOpen(false) }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-400 hover:bg-red-400/10 transition-colors"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    Sign out
-                  </button>
+        <div className="border-t p-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="w-full justify-start gap-3 px-2 h-12 hover:bg-accent">
+                <Avatar className="h-8 w-8 rounded-full border">
+                  <AvatarImage src={profile?.avatar_url} />
+                  <AvatarFallback className="rounded-full">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-sm font-medium truncate leading-none mb-1">
+                    {displayName}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user?.email}
+                  </p>
                 </div>
-              </>
-            )}
-          </div>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56" sideOffset={8}>
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate('/settings')}>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </aside>
 
       {/* ──────────── MAIN CONTENT ──────────── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-transparent">
         {/* Header */}
-        <header className="flex h-[60px] items-center gap-4 px-6 border-b border-white/10 bg-black/60 backdrop-blur-sm shrink-0">
+        <header className="flex h-16 items-center gap-4 px-6 border-b bg-card shrink-0 z-10">
           {/* Sidebar toggle */}
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-            aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+            className="text-muted-foreground"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
-          </button>
+          </Button>
 
           {/* Project title */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {activeProject && (
               <div
-                className="w-3 h-3 rounded-full"
+                className="w-3 h-3 rounded-full ring-2 ring-offset-2 ring-offset-background"
                 style={{ backgroundColor: activeProject.color }}
               />
             )}
-            <h1 className="font-semibold text-white text-sm">
+            <h1 className="font-semibold text-lg tracking-tight">
               {activeProject?.name ?? 'Select a Project'}
             </h1>
             {overdueTasks.length > 0 && (
-              <Badge tone="red">{overdueTasks.length} overdue</Badge>
+              <Badge variant="destructive" className="ml-2">
+                {overdueTasks.length} overdue
+              </Badge>
             )}
           </div>
 
           <div className="flex-1" />
 
-          {/* Search shortcut */}
-          <button
-            onClick={() => setCommandPaletteOpen(true)}
-            className="hidden sm:flex items-center gap-2 px-3 h-10 bg-white/5 border border-white/10 hover:border-white/15 rounded-xl text-slate-400 hover:text-slate-200 text-xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-          >
-            <span>Search...</span>
-            <kbd className="text-xs bg-white/5 border border-white/10 px-1.5 py-0.5 rounded font-mono text-slate-300">⌘K</kbd>
-          </button>
-
-          {/* View toggle */}
-          <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1">
-            <button
+          {/* View Switcher */}
+          <div className="hidden md:flex items-center bg-muted/20 p-1 rounded-lg border border-border mr-4">
+            <Button
+              variant={activeView === 'kanban' ? 'secondary' : 'ghost'}
+              size="sm"
               onClick={() => setActiveView('kanban')}
-              className={`p-2 rounded-lg transition-colors ${activeView === 'kanban' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-slate-200'}`}
-              title="Kanban view"
+              className="h-8 w-8 p-0"
+              title="Board View"
             >
-              <LayoutGrid className="w-3.5 h-3.5" />
-            </button>
-            <button
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={activeView === 'list' ? 'secondary' : 'ghost'}
+              size="sm"
               onClick={() => setActiveView('list')}
-              className={`p-2 rounded-lg transition-colors ${activeView === 'list' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-slate-200'}`}
-              title="List view"
+              className="h-8 w-8 p-0"
+              title="List View"
             >
-              <List className="w-3.5 h-3.5" />
-            </button>
+              <List className="h-4 w-4" />
+            </Button>
           </div>
 
-          {/* WebSocket status */}
-          <div
-            className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg ${
-              wsConnected
-                ? 'text-emerald-400 bg-emerald-400/10'
-                : 'text-slate-400 bg-white/5 border border-white/10'
-            }`}
-            title={wsConnected ? 'Live sync active' : 'Connecting...'}
-          >
-            {wsConnected ? (
-              <Wifi className="w-3 h-3" />
-            ) : (
-              <WifiOff className="w-3 h-3" />
-            )}
-            <span className="hidden sm:block">{wsConnected ? 'Live' : 'Offline'}</span>
+          {/* Search shortcut */}
+          <div className="hidden sm:flex items-center relative max-w-md w-full mx-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search tasks..."
+              className="pl-9 h-9 bg-secondary/50 border-transparent focus-visible:bg-background focus-visible:border-ring transition-all"
+              onClick={() => setCommandPaletteOpen(true)}
+              readOnly
+            />
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+              <span className="text-xs">⌘</span>K
+            </kbd>
           </div>
 
-          {/* AI button */}
-          <Button
-            onClick={() => setAIPanelOpen(true)}
-            size="sm"
-            className="px-3"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span className="hidden sm:block">AI</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* View toggle */}
+            <div className="flex items-center bg-secondary/50 rounded-lg p-1 border">
+              <Button
+                variant={activeView === 'kanban' ? 'secondary' : 'ghost'}
+                size="icon"
+                className="h-7 w-7 rounded-md"
+                onClick={() => setActiveView('kanban')}
+                title="Kanban view"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={activeView === 'list' ? 'secondary' : 'ghost'}
+                size="icon"
+                className="h-7 w-7 rounded-md"
+                onClick={() => setActiveView('list')}
+                title="List view"
+              >
+                <List className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* WebSocket status */}
+            <div
+              className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full font-medium transition-colors ${wsConnected
+                ? 'bg-emerald-500/10 text-emerald-500'
+                : 'bg-muted text-muted-foreground'
+                }`}
+              title={wsConnected ? 'Live sync active' : 'Connecting...'}
+            >
+              {wsConnected ? (
+                <Wifi className="w-3.5 h-3.5" />
+              ) : (
+                <WifiOff className="w-3.5 h-3.5" />
+              )}
+            </div>
+
+            {/* AI button */}
+            <Button
+              onClick={() => setAIPanelOpen(true)}
+              size="sm"
+              variant="glass"
+              className="gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span className="hidden sm:inline">Ask AI</span>
+            </Button>
+          </div>
         </header>
 
         {/* Board */}
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 overflow-hidden relative">
           {!activeProjectId ? (
             <div className="flex flex-col items-center justify-center h-full text-center px-4">
-              <FolderOpen className="w-12 h-12 text-slate-700 mb-3" />
-              <h3 className="text-slate-300 font-medium mb-1">No project selected</h3>
-              <p className="text-slate-500 text-sm">Choose a project from the sidebar to get started.</p>
+              <div className="p-6 bg-muted/30 rounded-full mb-4">
+                <FolderOpen className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">No project selected</h3>
+              <p className="text-muted-foreground max-w-sm">Choose a project from the sidebar to start managing your tasks.</p>
             </div>
           ) : (
-            <div className="h-full overflow-hidden">
-              <div className="px-6 pt-5 pb-3">
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <Surface className="p-5">
-                    <div className="text-xs text-slate-400">Total tasks</div>
-                    <div className="mt-2 text-2xl font-bold text-white">{statusCounts.total}</div>
-                  </Surface>
-                  <Surface className="p-5">
-                    <div className="text-xs text-slate-400">In progress</div>
-                    <div className="mt-2 text-2xl font-bold text-white">{statusCounts.inProgress}</div>
-                  </Surface>
-                  <Surface className="p-5">
-                    <div className="text-xs text-slate-400">Done</div>
-                    <div className="mt-2 text-2xl font-bold text-white">{statusCounts.done}</div>
-                  </Surface>
-                  <Surface className="p-5">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs text-slate-400">Progress</div>
-                      <div className="text-xs text-slate-300">{progressPct}%</div>
-                    </div>
-                    <div className="mt-3 h-2 w-full rounded-full bg-white/5 border border-white/10 overflow-hidden">
-                      <div className="h-full bg-blue-500" style={{ width: `${progressPct}%` }} />
-                    </div>
-                    <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
-                      <span className="inline-flex items-center gap-1">
-                        <span className="h-2 w-2 rounded-full bg-blue-500" />
-                        Done
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <span className="h-2 w-2 rounded-full bg-white/20" />
-                        Remaining
-                      </span>
-                    </div>
-                  </Surface>
-                </div>
-              </div>
-
-              <div className="h-[calc(100%-136px)] pt-2">
+            <div className="h-full pt-6">
+              {activeView === 'list' ? (
+                <TaskListView />
+              ) : (
                 <KanbanBoard />
-              </div>
+              )}
             </div>
           )}
         </main>

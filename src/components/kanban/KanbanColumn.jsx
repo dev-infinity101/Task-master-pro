@@ -1,19 +1,23 @@
 import { useState, useRef } from 'react'
-import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import { Plus, MoreHorizontal } from 'lucide-react'
 import useStore from '../../store/store'
 import { useShallow } from 'zustand/react/shallow'
 import { useTasks } from '../../hooks/useTasks'
 import TaskCard from './TaskCard'
+import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 
 export default function KanbanColumn({ column, tasks }) {
   const [isAddingTask, setIsAddingTask] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const inputRef = useRef(null)
-  const { activeProjectId, user } = useStore(useShallow((s) => ({
+  const { activeProjectId } = useStore(useShallow((s) => ({
     activeProjectId: s.activeProjectId,
-    user: s.user,
   })))
   const { addTask } = useTasks()
 
@@ -49,103 +53,80 @@ export default function KanbanColumn({ column, tasks }) {
   const accentColor = column.color ?? '#94a3b8'
 
   return (
-    <div
-      ref={setNodeRef}
-      className={`flex flex-col w-72 shrink-0 rounded-2xl transition-colors duration-200 ${
-        isOver ? 'bg-slate-800/60' : 'bg-slate-900/40'
-      }`}
-    >
-      {/* Column Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3">
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-2.5 h-2.5 rounded-full shrink-0"
-            style={{ backgroundColor: accentColor }}
-          />
-          <h3 className="font-semibold text-slate-200 text-sm">{column.name}</h3>
-          <span className="text-xs font-medium text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded-full">
-            {tasks.length}
-          </span>
-        </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={handleStartAdding}
-            className="p-1 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-all"
-            title="Add task"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-          <button className="p-1 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-all">
-            <MoreHorizontal className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Top accent line */}
-      <div
-        className="h-0.5 mx-4 rounded-full mb-3 opacity-60"
-        style={{ backgroundColor: accentColor }}
-      />
-
-      {/* Tasks */}
-      <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-2 min-h-[100px]">
-        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
-          {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} />
-          ))}
-        </SortableContext>
-
-        {tasks.length === 0 && !isAddingTask && (
-          <div
-            className="h-20 flex items-center justify-center border-2 border-dashed border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition-colors"
-            onClick={handleStartAdding}
-          >
-            <p className="text-xs text-slate-600">Drop here or click to add</p>
-          </div>
-        )}
-      </div>
-
-      {/* Quick Add Task */}
-      {isAddingTask ? (
-        <div className="px-3 pb-3">
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-3">
-            <textarea
-              ref={inputRef}
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Task name..."
-              rows={2}
-              className="w-full bg-transparent text-sm text-slate-200 placeholder-slate-500 outline-none resize-none"
+    <div ref={setNodeRef} className="flex flex-col w-80 shrink-0 h-full">
+      <Card className={cn(
+        "flex flex-col h-full bg-white/80 border-none shadow-none rounded-2xl transition-colors",
+        isOver && "bg-accent/10"
+      )}>
+        {/* Column Header */}
+        <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0">
+          <div className="flex items-center gap-2">
+            <div
+              className="w-2 h-2 rounded-full shrink-0 ring-2 ring-offset-1 ring-offset-background"
+              style={{ backgroundColor: accentColor }}
             />
-            <div className="flex items-center gap-2 mt-2">
-              <button
-                onClick={handleAddTask}
-                disabled={!newTaskTitle.trim()}
-                className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Add task
-              </button>
-              <button
-                onClick={() => { setIsAddingTask(false); setNewTaskTitle('') }}
-                className="px-3 py-1 text-xs text-slate-400 hover:text-slate-200 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
+            <h3 className="font-semibold text-sm tracking-tight">{column.name}</h3>
+            <Badge variant="secondary" className="px-1.5 py-0 h-5 min-w-5 justify-center text-[10px] font-mono">
+              {tasks.length}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground"
+              onClick={handleStartAdding}
+              title="Add task"
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground"
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </Button>
           </div>
         </div>
-      ) : (
-        <div className="px-3 pb-3">
-          <button
-            onClick={handleStartAdding}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Add task
-          </button>
+
+        {/* Tasks */}
+        <div className="flex-1 overflow-y-auto px-2 pb-3 space-y-2 min-h-[100px]">
+          <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+            {tasks.map((task) => (
+              <TaskCard key={task.id} task={task} />
+            ))}
+          </SortableContext>
+
+          {isAddingTask ? (
+            <div className="p-1 animate-in fade-in zoom-in-95 duration-200">
+              <Input
+                ref={inputRef}
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onBlur={() => { if (!newTaskTitle) setIsAddingTask(false) }}
+                placeholder="What needs to be done?"
+                className="bg-card border-primary/50 ring-1 ring-primary/20 shadow-lg"
+              />
+              <div className="flex justify-end gap-2 mt-2">
+                <Button size="sm" variant="ghost" onClick={() => setIsAddingTask(false)}>Cancel</Button>
+                <Button size="sm" onClick={handleAddTask}>Add</Button>
+              </div>
+            </div>
+          ) : (
+            tasks.length === 0 && (
+              <div
+                onClick={handleStartAdding}
+                className="h-24 flex flex-col items-center justify-center border-2 border-dashed border-muted rounded-xl cursor-pointer hover:border-primary/50 hover:bg-accent/50 transition-all group"
+              >
+                <Plus className="w-6 h-6 text-muted-foreground group-hover:text-primary mb-1" />
+                <span className="text-xs text-muted-foreground font-medium group-hover:text-primary">Add a task</span>
+              </div>
+            )
+          )}
         </div>
-      )}
+      </Card>
     </div>
   )
 }

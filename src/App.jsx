@@ -15,7 +15,7 @@
  */
 
 import { useEffect, Component, lazy, Suspense } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import useStore from './store/store'
 import { useShallow } from 'zustand/react/shallow'
@@ -33,8 +33,8 @@ import AIAssistant from './components/ai/AIAssistant'
 
 // Pages (lazy-loaded for code splitting)
 const Dashboard = lazy(() => import('./pages/Dashboard'))
-const Analytics  = lazy(() => import('./pages/Analytics'))
-const Settings   = lazy(() => import('./pages/Settings'))
+const Analytics = lazy(() => import('./pages/Analytics'))
+const Settings = lazy(() => import('./pages/Settings'))
 
 const PageLoader = () => (
   <div className="flex items-center justify-center h-full">
@@ -84,6 +84,8 @@ export default function App() {
     theme: s.theme,
     setTheme: s.setTheme,
   })))
+  const location = useLocation()
+  const isLanding = location.pathname === '/'
   useAuth() // Initializes session and subscribes to auth changes
 
   // System theme detection
@@ -105,7 +107,20 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-slate-950 text-slate-200 font-sans antialiased">
+      <div className={`min-h-screen font-sans antialiased ${isLanding ? '' : 'bg-background text-foreground'}`}>
+        {!isLanding && (
+          <>
+            <div className="fixed inset-0 pointer-events-none -z-10 hidden dark:block">
+              <div className="absolute inset-0 bg-[#000000]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(255,255,255,0.02),transparent_40%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_35%,rgba(255,255,255,0.015),transparent_45%)]" />
+            </div>
+            <div className="fixed inset-0 pointer-events-none -z-10 dark:hidden">
+              <div className="absolute inset-0 bg-[#ECEEF0]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(37,99,235,0.06),transparent_40%)]" />
+            </div>
+          </>
+        )}
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<LandingPage />} />
@@ -158,13 +173,13 @@ export default function App() {
           position="bottom-right"
           toastOptions={{
             style: {
-              background: '#1e293b',
-              border: '1px solid #334155',
-              color: '#e2e8f0',
-              borderRadius: '12px',
+              background: 'var(--card)',
+              border: '1px solid var(--border)',
+              color: 'var(--card-foreground)',
+              borderRadius: 'var(--radius)',
             },
-            success: { iconTheme: { primary: '#10b981', secondary: '#1e293b' } },
-            error:   { iconTheme: { primary: '#ef4444', secondary: '#1e293b' } },
+            success: { iconTheme: { primary: '#10b981', secondary: '#050505' } },
+            error: { iconTheme: { primary: '#ef4444', secondary: '#050505' } },
           }}
           richColors
         />

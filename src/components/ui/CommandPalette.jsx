@@ -29,18 +29,18 @@ import { useShallow } from 'zustand/react/shallow'
 
 const PRIORITY_COLORS = {
   urgent: 'text-red-400',
-  high:   'text-orange-400',
+  high: 'text-orange-400',
   medium: 'text-yellow-400',
-  low:    'text-blue-400',
-  none:   'text-slate-600',
+  low: 'text-blue-400',
+  none: 'text-muted-foreground',
 }
 
 const STATIC_ACTIONS = [
-  { id: 'nav-dashboard', type: 'nav', icon: LayoutDashboard, label: 'Go to Dashboard', path: '/dashboard', shortcut: 'G D' },
-  { id: 'nav-analytics', type: 'nav', icon: BarChart2,       label: 'Go to Analytics',  path: '/analytics',  shortcut: 'G A' },
-  { id: 'nav-settings',  type: 'nav', icon: Settings,        label: 'Go to Settings',   path: '/settings',   shortcut: 'G S' },
-  { id: 'action-ai',     type: 'action', icon: Sparkles,     label: 'Open AI Assistant', shortcut: 'A I' },
-  { id: 'action-add',    type: 'action', icon: Plus,         label: 'Create new task',   shortcut: 'N' },
+  { id: 'nav-dashboard', type: 'nav', icon: LayoutDashboard, label: 'Go to Dashboard', path: '/dashboard' },
+  { id: 'nav-analytics', type: 'nav', icon: BarChart2, label: 'Go to Analytics', path: '/analytics' },
+  { id: 'nav-settings', type: 'nav', icon: Settings, label: 'Go to Settings', path: '/settings' },
+  { id: 'action-ai', type: 'action', icon: Sparkles, label: 'Open AI Assistant' },
+  { id: 'action-add', type: 'action', icon: Plus, label: 'Create new task' },
 ]
 
 export default function CommandPalette() {
@@ -168,19 +168,19 @@ export default function CommandPalette() {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+        className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-50"
         onClick={() => setCommandPaletteOpen(false)}
       />
 
       {/* Palette */}
       <div className="fixed top-[20vh] left-1/2 -translate-x-1/2 w-full max-w-lg z-50 px-4">
-        <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="bg-popover border border-border rounded-2xl shadow-2xl overflow-hidden">
           {/* Search input */}
-          <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-800">
+          <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border">
             {isSearching ? (
-              <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin shrink-0" />
+              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0" />
             ) : (
-              <Search className="w-4 h-4 text-slate-500 shrink-0" />
+              <Search className="w-4 h-4 text-muted-foreground shrink-0" />
             )}
             <input
               ref={inputRef}
@@ -188,9 +188,9 @@ export default function CommandPalette() {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search tasks or type a command..."
-              className="flex-1 bg-transparent text-slate-200 placeholder-slate-500 text-sm outline-none"
+              className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground text-sm outline-none"
             />
-            <kbd className="hidden sm:block text-xs text-slate-600 bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded-md font-mono">
+            <kbd className="hidden sm:block text-xs text-muted-foreground bg-muted border border-border px-1.5 py-0.5 rounded-md font-mono">
               ESC
             </kbd>
           </div>
@@ -198,7 +198,7 @@ export default function CommandPalette() {
           {/* Results */}
           <div className="max-h-72 overflow-y-auto py-2">
             {results.length === 0 ? (
-              <div className="px-4 py-6 text-center text-sm text-slate-500">
+              <div className="px-4 py-6 text-center text-sm text-muted-foreground">
                 No results for &quot;{query}&quot;
               </div>
             ) : (
@@ -206,7 +206,7 @@ export default function CommandPalette() {
                 {/* Group tasks if any */}
                 {results.some((r) => r.type === 'task') && (
                   <div className="px-3 pb-1">
-                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wider px-2 mb-1">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2 mb-1">
                       Tasks
                     </p>
                     {results
@@ -217,18 +217,17 @@ export default function CommandPalette() {
                           <button
                             key={item.id}
                             onClick={() => handleSelect(item)}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
-                              selectedIdx === globalIdx
-                                ? 'bg-indigo-500/15 text-white'
-                                : 'text-slate-300 hover:bg-slate-800'
-                            }`}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${selectedIdx === globalIdx
+                                ? 'bg-primary/10 text-foreground'
+                                : 'text-foreground hover:bg-accent'
+                              }`}
                           >
                             <Flag className={`w-3.5 h-3.5 shrink-0 ${PRIORITY_COLORS[item.priority ?? 'none']}`} />
                             <span className="flex-1 text-sm truncate">{item.label}</span>
                             {item.subtitle && (
-                              <span className="text-xs text-slate-500">{item.subtitle}</span>
+                              <span className="text-xs text-muted-foreground">{item.subtitle}</span>
                             )}
-                            <ArrowRight className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                            <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                           </button>
                         )
                       })}
@@ -239,7 +238,7 @@ export default function CommandPalette() {
                 {results.some((r) => r.type !== 'task') && (
                   <div className="px-3 pt-1">
                     {results.some((r) => r.type === 'task') && (
-                      <p className="text-xs font-medium text-slate-600 uppercase tracking-wider px-2 mb-1 mt-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2 mb-1 mt-2">
                         Actions
                       </p>
                     )}
@@ -252,14 +251,13 @@ export default function CommandPalette() {
                           <button
                             key={item.id}
                             onClick={() => handleSelect(item)}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
-                              selectedIdx === globalIdx
-                                ? 'bg-indigo-500/15 text-white'
-                                : 'text-slate-300 hover:bg-slate-800'
-                            }`}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${selectedIdx === globalIdx
+                                ? 'bg-primary/10 text-foreground'
+                                : 'text-foreground hover:bg-accent'
+                              }`}
                           >
-                            <div className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
-                              {Icon && <Icon className="w-3.5 h-3.5 text-slate-400" />}
+                            <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0">
+                              {Icon && <Icon className="w-3.5 h-3.5 text-muted-foreground" />}
                             </div>
                             <span className="flex-1 text-sm">{item.label}</span>
                             {item.shortcut && (
@@ -267,7 +265,7 @@ export default function CommandPalette() {
                                 {item.shortcut.split(' ').map((k) => (
                                   <kbd
                                     key={k}
-                                    className="text-xs text-slate-500 bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded font-mono"
+                                    className="text-xs text-muted-foreground bg-muted border border-border px-1.5 py-0.5 rounded font-mono"
                                   >
                                     {k}
                                   </kbd>
@@ -284,17 +282,17 @@ export default function CommandPalette() {
           </div>
 
           {/* Footer hint */}
-          <div className="flex items-center gap-4 px-4 py-2.5 border-t border-slate-800 bg-slate-900/50">
-            <div className="flex items-center gap-1.5 text-xs text-slate-600">
-              <kbd className="text-xs bg-slate-800 border border-slate-700 px-1 py-0.5 rounded font-mono">↑↓</kbd>
+          <div className="flex items-center gap-4 px-4 py-2.5 border-t border-border bg-popover/50">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <kbd className="text-xs bg-muted border border-border px-1 py-0.5 rounded font-mono">↑↓</kbd>
               <span>navigate</span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-slate-600">
-              <kbd className="text-xs bg-slate-800 border border-slate-700 px-1 py-0.5 rounded font-mono">↵</kbd>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <kbd className="text-xs bg-muted border border-border px-1 py-0.5 rounded font-mono">↵</kbd>
               <span>select</span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-slate-600">
-              <kbd className="text-xs bg-slate-800 border border-slate-700 px-1 py-0.5 rounded font-mono">ESC</kbd>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <kbd className="text-xs bg-muted border border-border px-1 py-0.5 rounded font-mono">ESC</kbd>
               <span>close</span>
             </div>
           </div>

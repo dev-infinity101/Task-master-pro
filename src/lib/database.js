@@ -116,7 +116,7 @@ export async function getProjects(userId) {
   return { data: data ?? [], error: null }
 }
 
-export async function createProject(userId, { name, color = '#6366f1', icon = 'folder' }) {
+export async function createProject(userId, { name, color = '#6366f1' }) {
   // Get max position for ordering
   const { data: existing } = await supabase
     .from('projects')
@@ -129,9 +129,47 @@ export async function createProject(userId, { name, color = '#6366f1', icon = 'f
 
   return supabase
     .from('projects')
-    .insert({ user_id: userId, name, color, icon, position: position + 1000 })
+    .insert({ user_id: userId, name, color, position: position + 1000 })
     .select()
     .single()
+}
+
+export async function createProjectWithDefaults(
+  userId,
+  { name, color = '#6366f1' }
+) {
+  if (!supabaseConfigured) return missingSupabase()
+
+  const { error: ensureProfileError } = await supabase
+    .from('profiles')
+    .upsert({ id: userId }, { onConflict: 'id', ignoreDuplicates: true })
+
+  if (ensureProfileError) return { data: null, error: ensureProfileError }
+
+  const { data: project, error: projectError } = await createProject(userId, {
+    name,
+    color,
+  })
+
+  if (projectError) return { data: null, error: projectError }
+
+  const defaultColumns = [
+    { user_id: userId, project_id: project.id, name: 'Todo', color: '#94a3b8', position: 0 },
+    { user_id: userId, project_id: project.id, name: 'In Progress', color: '#f59e0b', position: 1000 },
+    { user_id: userId, project_id: project.id, name: 'Done', color: '#10b981', position: 2000 },
+  ]
+
+  const { data: columns, error: columnsError } = await supabase
+    .from('columns')
+    .insert(defaultColumns)
+    .select()
+
+  if (columnsError) {
+    await supabase.from('projects').delete().eq('id', project.id)
+    return { data: null, error: columnsError }
+  }
+
+  return { data: { project, columns: columns ?? [] }, error: null }
 }
 
 export async function updateProject(projectId, updates) {

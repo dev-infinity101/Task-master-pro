@@ -50,11 +50,11 @@ export function useTasks() {
         user_id: userId,
         project_id: projectId,
         column_id: columnId,
-        parent_task_id: null,
+        parent_task_id: taskData.parent_task_id ?? null,
         title: taskData.title,
         description: taskData.description ?? null,
         priority: taskData.priority ?? 'none',
-        status: 'todo',
+        status: taskData.status ?? 'todo',
         position: Date.now(), // temp position
         due_date: taskData.due_date ?? null,
         tags: taskData.tags ?? [],

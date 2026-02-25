@@ -30,7 +30,7 @@ export function useAuth() {
         }
         const session = data?.session ?? null
         setSession(session)
-        if (session) fetchProfile(session.user.id)
+        if (session) fetchProfile(session.user)
         else setAuthLoading(false)
       } catch (error) {
         if (!mounted) return
@@ -45,7 +45,7 @@ export function useAuth() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setAuthLoading(true)
       setSession(session)
-      if (session) fetchProfile(session.user.id)
+      if (session) fetchProfile(session.user)
       else clearAuth()
     })
 
@@ -55,8 +55,14 @@ export function useAuth() {
     }
   }, [])
 
-  async function fetchProfile(userId) {
+  async function fetchProfile(user) {
     try {
+      const userId = user?.id
+      if (!userId) {
+        setProfile(null)
+        return
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -66,8 +72,31 @@ export function useAuth() {
       if (error && error.code !== 'PGRST116' && error.status !== 406) {
         console.error('Error fetching profile:', error)
       }
-      
-      setProfile(data ?? null)
+
+      if (!data) {
+        const fullName =
+          user?.user_metadata?.full_name ??
+          user?.user_metadata?.name ??
+          user?.email ??
+          'Account'
+
+        const { data: created, error: createError } = await supabase
+          .from('profiles')
+          .insert({ id: userId, full_name: fullName })
+          .select()
+          .single()
+
+        if (createError) {
+          console.error('Error creating profile:', createError)
+          setProfile(null)
+          return
+        }
+
+        setProfile(created ?? null)
+        return
+      }
+
+      setProfile(data)
     } catch (error) {
       console.error('Profile fetch error:', error)
     } finally {

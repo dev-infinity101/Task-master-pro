@@ -257,7 +257,7 @@ const useStore = create(
       // ─────────────────────────────────────────
       // UI SLICE (NOT persisted)
       // ─────────────────────────────────────────
-      theme: 'system',           // 'light' | 'dark' | 'system'
+      theme: 'light',           // 'light' | 'dark' | 'system'
       sidebarOpen: true,
       activeView: 'kanban',      // 'kanban' | 'list' | 'analytics'
       commandPaletteOpen: false,
