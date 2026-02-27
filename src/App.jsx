@@ -36,11 +36,9 @@ const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Analytics = lazy(() => import('./pages/Analytics'))
 const Settings = lazy(() => import('./pages/Settings'))
 
-const PageLoader = () => (
-  <div className="flex items-center justify-center h-full">
-    <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-  </div>
-)
+import HourglassLoader from './components/ui/HourglassLoader'
+
+const PageLoader = () => <HourglassLoader />
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -164,7 +162,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
-        {/* Global overlays — rendered outside route components */}
+        {/* Global overlays */}
         <CommandPalette />
         <AIAssistant />
 

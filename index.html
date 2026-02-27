@@ -1,15 +1,42 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <title>TaskMaster v2.0</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- SEO -->
+  <meta name="description"
+    content="TaskMaster Pro — Plan, organize, and execute work with real-time sync and AI-powered task planning. Built for teams that need to ship consistently." />
+  <meta name="theme-color" content="#2563EB" />
+
+  <!-- Favicon: adaptive SVG (auto dark/light via CSS media query) -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <!-- Fallback PNG for browsers that don't support SVG favicons -->
+  <link rel="alternate icon" type="image/png" href="/favicon.svg" />
+
+  <!-- PWA / Apple Touch Icon -->
+  <link rel="apple-touch-icon" href="/favicon.svg" />
+  <meta name="apple-mobile-web-app-title" content="TaskMaster Pro" />
+  <meta name="application-name" content="TaskMaster Pro" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="TaskMaster Pro" />
+  <meta property="og:description" content="AI-powered task management for teams that ship." />
+  <meta property="og:type" content="website" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link
+    href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,301,701,300,501,401,901,400,2,600,601&display=swap"
+    rel="stylesheet">
+
+  <title>TaskMaster Pro — AI-Powered Task Management</title>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>

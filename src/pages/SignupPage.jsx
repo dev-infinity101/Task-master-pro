@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { Eye, EyeOff, Zap, Loader2, CheckCircle, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff, Loader2, CheckCircle, ArrowRight } from 'lucide-react'
 import { signUp } from '../lib/database'
 import useStore from '../store/store'
 import { toast } from 'sonner'
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+import TaskMasterLogo from '@/components/ui/TaskMasterLogo'
 
 function Surface({ className, ...props }) {
   return (
@@ -56,25 +57,17 @@ export default function SignupPage() {
   }
 
   return (
-    <div
-      className="min-h-screen relative flex items-center justify-center bg-[#F7F8FA] text-[#111111] overflow-hidden selection:bg-[#BFDBFE]"
-      style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-    >
+    <div className="min-h-screen relative flex items-center justify-center bg-[#F7F8FA] text-[#111111] overflow-hidden selection:bg-[#BFDBFE]">
       <div className="relative z-10 w-full max-w-md px-6 py-12">
         <div className="flex flex-col items-center">
           <Link to="/" className="flex items-center gap-2.5 mb-12">
-            <div className="h-10 w-10 bg-[#111111] rounded-xl flex items-center justify-center">
-              <Zap className="h-5 w-5 text-white" fill="white" />
-            </div>
-            <span className="font-bold text-xl tracking-tight text-[#111111]">
-              TaskMaster
-            </span>
+            <TaskMasterLogo size={40} variant="auth" />
           </Link>
 
           {!emailSent ? (
             <div className="w-full">
               <div className="mb-8 text-center">
-                <h2 className="text-[32px] font-bold tracking-tight text-[#111111] leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>
+                <h2 className="section-heading text-[32px] font-bold tracking-tight text-[#111111] leading-tight">
                   Create account
                 </h2>
                 <p className="mt-3 text-[16px] text-[#555555] leading-relaxed">

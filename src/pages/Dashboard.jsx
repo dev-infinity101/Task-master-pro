@@ -1,25 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   LayoutGrid,
   List,
-  Sparkles,
   Wifi,
   WifiOff,
   Plus,
   ChevronDown,
   LogOut,
   Settings,
-  Zap,
   FolderOpen,
   Search,
-  Loader2
+  Loader2,
+  BarChart2,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/store'
 import { useShallow } from 'zustand/react/shallow'
-import { useTasks } from '../hooks/useTasks'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
-import { getProjects, getColumns, createProjectWithDefaults, signOut as dbSignOut } from '../lib/database'
+import { createProjectWithDefaults, signOut as dbSignOut } from '../lib/database'
 import KanbanBoard from '../components/kanban/KanbanBoard'
 import TaskListView from '../components/list/TaskListView'
 import { toast } from 'sonner'
@@ -30,6 +28,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import YearProgressBanner from "@/components/ui/YearProgressBanner"
+import { useProjectLoader } from '../hooks/useProjectLoader'
 import {
   Dialog,
   DialogContent,
@@ -59,8 +58,10 @@ const PROJECT_COLORS = [
   '#f97316',
 ]
 
+import HourglassLoader from '../components/ui/HourglassLoader'
+import TaskMasterLogo from '../components/ui/TaskMasterLogo'
+
 export default function Dashboard() {
-  const [projectsLoading, setProjectsLoading] = useState(false)
   const [createProjectOpen, setCreateProjectOpen] = useState(false)
   const [isCreatingProject, setIsCreatingProject] = useState(false)
   const [newProjectName, setNewProjectName] = useState('')
@@ -81,7 +82,6 @@ export default function Dashboard() {
     setColumns,
     setActiveProject,
     setCommandPaletteOpen,
-    setAIPanelOpen,
     setActiveView,
     setSidebarOpen,
     getActiveProject,
@@ -99,71 +99,20 @@ export default function Dashboard() {
     setColumns: s.setColumns,
     setActiveProject: s.setActiveProject,
     setCommandPaletteOpen: s.setCommandPaletteOpen,
-    setAIPanelOpen: s.setAIPanelOpen,
     setActiveView: s.setActiveView,
     setSidebarOpen: s.setSidebarOpen,
     getActiveProject: s.getActiveProject,
   })))
 
-  const { loadTasks } = useTasks()
+  // Load projects + columns + tasks via shared hook
+  const { loading: projectsLoading } = useProjectLoader()
 
-  // Activate real WebSocket for active project
+  // Real-time sync for active project
   useRealtimeSync(activeProjectId)
 
-  // Load projects on mount
-  useEffect(() => {
-    if (!user?.id) return
-    let mounted = true
-      ; (async () => {
-        setProjectsLoading(true)
-        try {
-          const { data, error } = await getProjects(user.id)
-          if (!mounted) return
-
-          if (error) {
-            toast.error('Failed to load projects')
-          } else if (data && data.length > 0) {
-            setProjects(data)
-            // Ensure active project is set if not already
-            if (!activeProjectId) {
-              setActiveProject(data[0].id)
-            }
-          } else {
-            setProjects([])
-          }
-        } catch (error) {
-          if (!mounted) return
-          console.error('Project load error:', error)
-          toast.error('Failed to load projects')
-        } finally {
-          if (mounted) setProjectsLoading(false)
-        }
-      })()
-    return () => { mounted = false }
-  }, [user?.id, setProjects, activeProjectId, setActiveProject])
-
-  // Load columns + tasks when active project changes
-  useEffect(() => {
-    if (!activeProjectId) return
-    let mounted = true
-      ; (async () => {
-        try {
-          const [colResult] = await Promise.all([getColumns(activeProjectId)])
-          if (!mounted) return
-
-          if (colResult.error) {
-            toast.error('Failed to load columns')
-          }
-          if (colResult.data) setColumns(activeProjectId, colResult.data)
-          await loadTasks(activeProjectId)
-        } catch (error) {
-          if (!mounted) return
-          console.error('Column/Task load error:', error)
-          toast.error('Failed to load board data')
-        }
-      })()
-    return () => { mounted = false }
-  }, [activeProjectId, setColumns, loadTasks])
+  if (projectsLoading && projects.length === 0) {
+    return <HourglassLoader />
+  }
 
   const activeProject = getActiveProject()
   const activeTasks = (tasks[activeProjectId] ?? []).filter((t) => t.status !== 'done')
@@ -227,14 +176,8 @@ export default function Dashboard() {
           }`}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-6 h-16 border-b">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-            <Zap className="h-4 w-4" fill="currentColor" />
-          </div>
-          <div className="leading-tight">
-            <div className="text-sm font-bold tracking-tight">TaskMaster</div>
-            <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Pro Workspace</div>
-          </div>
+        <div className="flex items-center px-5 h-16 border-b">
+          <TaskMasterLogo size={32} variant="sidebar" />
         </div>
 
         {/* Projects */}
@@ -322,7 +265,7 @@ export default function Dashboard() {
 
             <div className="space-y-1">
               {projectsLoading && (
-                <div className="px-2 py-2 text-xs text-muted-foreground">Loading projects...</div>
+                <HourglassLoader fullScreen={false} className="py-2" />
               )}
               {!projectsLoading && projects.length === 0 && (
                 <div className="px-2 py-2 text-xs text-muted-foreground">No projects yet.</div>
@@ -350,6 +293,19 @@ export default function Dashboard() {
                 </Button>
               ))}
             </div>
+          </div>
+
+          {/* Nav shortcuts */}
+          <div className="px-4 mt-4 pb-2">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 block mb-2">Views</span>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/analytics')}
+              className="w-full justify-start gap-3 px-3 font-normal text-muted-foreground hover:text-foreground"
+            >
+              <BarChart2 className="w-4 h-4 shrink-0" />
+              <span className="truncate">Analytics</span>
+            </Button>
           </div>
         </ScrollArea>
 
@@ -499,17 +455,6 @@ export default function Dashboard() {
                 <WifiOff className="w-3.5 h-3.5" />
               )}
             </div>
-
-            {/* AI button */}
-            <Button
-              onClick={() => setAIPanelOpen(true)}
-              size="sm"
-              variant="glass"
-              className="gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span className="hidden sm:inline">Ask AI</span>
-            </Button>
           </div>
         </header>
 

@@ -71,10 +71,7 @@ export default function YearProgressBanner({ displayName }) {
             <div className="absolute inset-0 dark:bg-[radial-gradient(ellipse_at_top_left,rgba(34,197,94,0.06),transparent_60%)] pointer-events-none" />
 
             {/* Greeting */}
-            <p
-                className="text-[18px] font-semibold mb-4 dark:text-white text-[#111111]"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-            >
+            <p className="text-[18px] font-semibold mb-4 dark:text-white text-[#111111]">
                 Hi {firstName}, good to see you {greetingEmoji}
             </p>
 

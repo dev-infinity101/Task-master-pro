@@ -255,9 +255,11 @@ const useStore = create(
         }),
 
       // ─────────────────────────────────────────
-      // UI SLICE (NOT persisted)
+      // UI SLICE (theme persisted to localStorage)
       // ─────────────────────────────────────────
-      theme: 'light',           // 'light' | 'dark' | 'system'
+      theme: (() => {
+        try { return localStorage.getItem('tm-theme') || 'light' } catch { return 'light' }
+      })(),
       sidebarOpen: true,
       activeView: 'kanban',      // 'kanban' | 'list' | 'analytics'
       commandPaletteOpen: false,
@@ -267,6 +269,7 @@ const useStore = create(
       setTheme: (theme) =>
         set((state) => {
           state.theme = theme
+          try { localStorage.setItem('tm-theme', theme) } catch { }
         }),
 
       setSidebarOpen: (open) =>

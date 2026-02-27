@@ -38,13 +38,21 @@ yarn-error.log*
 
 # Supabase
 supabase/functions/*/deno.lock
+supabase/.temp/
+supabase/functions/**/*.env
 
-#docs 
+# Docs and Project Metadata
 SETUP.md
 TaskMaster_PRD.md
 TaskMaster_PRD.docx
 development-checklist.md
 setup-troubleshoot.md
 ui-guidlines.md
-
 UI-Refs
+
+# Deployment and Tools
+.vercel
+.eslintcache
+vite.config.*.timestamp-*
+.gemini/
+*.log

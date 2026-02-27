@@ -27,7 +27,15 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
 
-  --font-sans: "Inter", "system-ui", "sans-serif";
+  --font-sans: "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
+
+  /* Global Weight Optimization Switch */
+  --font-weight-normal: 500;
+  --font-weight-medium: 600;
+  --font-weight-semibold: 700;
+  --font-weight-bold: 800;
+  --font-weight-extrabold: 900;
+  --font-weight-black: 950;
 }
 
 @layer base {
@@ -69,6 +77,23 @@
     --ring: 221 83% 53%;
 
     --radius: 0.75rem;
+
+    /* ── Brand Logo Design Tokens ─────────────────────
+       Light mode: light surface bg, blue border, blue icon
+       Matches reference: light grey bg + blue rounded square + blue hourglass
+    ─────────────────────────────────────────────────── */
+    --color-primary-blue: #2563EB;
+    --color-light-surface: #EBF2FF;
+    --color-dark-surface: #2563EB;
+    --color-white: #FFFFFF;
+
+    /* Logo CSS tokens (controls SVG fill via CSS variables) */
+    --logo-bg: #EBF2FF;
+    /* light blue tinted surface  */
+    --logo-border: #2563EB;
+    /* primary blue border stroke  */
+    --logo-icon: #2563EB;
+    /* hourglass icon fill colour  */
   }
 
   .dark {
@@ -78,7 +103,8 @@
     --foreground: 0 0% 100%;
     /* Pure White Text */
 
-    --card: 0 0% 0%;
+    --card: 0 0% 3%;
+    /* Deeper Black Card */
     --card-foreground: 0 0% 100%;
 
     --popover: 0 0% 0%;
@@ -104,6 +130,17 @@
     /* Visible but dark border on black */
     --input: 0 0% 12%;
     --ring: 221 83% 53%;
+
+    /* ── Brand Logo Design Tokens (Dark) ──────────────
+       Dark mode: solid blue bg, white border, white icon
+       Matches reference: solid blue square + white hourglass
+    ─────────────────────────────────────────────────── */
+    --logo-bg: #2563EB;
+    /* solid primary blue fill    */
+    --logo-border: #FFFFFF;
+    /* white border stroke         */
+    --logo-icon: #FFFFFF;
+    /* white hourglass icon        */
   }
 }
 
@@ -115,5 +152,42 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    font-weight: 500;
+    /* Bumped from 400 to 500 */
+  }
+
+  /* Typography Scale System - Optimized Weight Shift */
+  h1,
+  .hero-headline {
+    font-weight: 900;
+    /* Bumped from 700 to 900 for serious authority */
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+  }
+
+  h2,
+  h3,
+  .section-heading {
+    font-weight: 700;
+    /* Bumped from 600 to 700 */
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+  }
+
+  p,
+  .body-text {
+    font-weight: 500;
+    /* Bumped from 400 to 500 for better legibility */
+    letter-spacing: -0.01em;
+  }
+
+  button,
+  label,
+  .ui-label {
+    font-weight: 600;
+    /* Bumped from 500 to 600 */
+    letter-spacing: 0.01em;
   }
 }

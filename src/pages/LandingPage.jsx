@@ -1,6 +1,5 @@
 import { Link, Navigate } from 'react-router-dom'
 import {
-  Zap,
   Menu,
   X,
   ArrowRight,
@@ -17,6 +16,7 @@ import { useState } from 'react'
 import useStore from '../store/store'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import TaskMasterLogo from '@/components/ui/TaskMasterLogo'
 import laptopImg from '../assets/laptop.png'
 import tabletImg from '../assets/tablet.png'
 import service1Img from '../assets/service-1.png'
@@ -42,15 +42,7 @@ function Nav({ mobileOpen, setMobileOpen }) {
       <Container className="h-full flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="h-8 w-8 bg-[#111111] rounded-lg flex items-center justify-center">
-            <Zap className="h-4 w-4 text-white" fill="white" />
-          </div>
-          <span
-            className="font-bold text-[15px] tracking-tight text-[#111111]"
-            style={{ fontFamily: 'Inter, sans-serif' }}
-          >
-            TaskMaster
-          </span>
+          <TaskMasterLogo size={28} showWordmark />
         </Link>
 
         {/* Desktop nav */}
@@ -135,18 +127,12 @@ function HeroSection() {
           {/* Left: Copy */}
           <div className="space-y-8">
 
-            <h1
-              className="text-[56px] md:text-[64px] font-bold leading-[1.08] text-[#111111] tracking-tight"
-              style={{ fontFamily: 'Inter, sans-serif' }}
-            >
+            <h1 className="hero-headline text-[56px] md:text-[64px] font-bold leading-[1.08] text-[#111111] tracking-tight">
               Your tasks.{' '}
               <span className="text-[#2563EB]">Planned intelligently.</span>
             </h1>
 
-            <p
-              className="text-[18px] leading-[1.6] text-[#555555] max-w-lg"
-              style={{ fontFamily: 'Inter, sans-serif' }}
-            >
+            <p className="body-text text-[18px] leading-[1.6] text-[#555555] max-w-lg">
               Plan, organize, and execute work with real-time sync and
               AI-powered task planning. Built for teams that need to ship
               consistently.
@@ -154,7 +140,7 @@ function HeroSection() {
 
             <div className="flex flex-col sm:flex-row items-start gap-4">
               <Link to="/signup">
-                <button className="inline-flex items-center gap-2 h-12 px-6 rounded-[10px] bg-[#111111] text-white text-[14px] font-semibold hover:bg-[#2563EB] transition-colors shadow-sm">
+                <button className="ui-label inline-flex items-center gap-2 h-12 px-6 rounded-[10px] bg-[#111111] text-white text-[14px] font-semibold hover:bg-[#2563EB] transition-colors shadow-sm">
                   Get started free
                   <ArrowRight className="h-4 w-4" />
                 </button>
@@ -251,7 +237,7 @@ function FeaturesSection() {
         <div className="text-center mb-16">
           <h2
             className="text-[40px] font-bold text-[#111111] leading-tight"
-            style={{ fontFamily: 'Inter, sans-serif' }}
+
           >
             Everything you need to execute faster.
           </h2>
@@ -269,10 +255,7 @@ function FeaturesSection() {
               <div className="w-10 h-10 rounded-lg bg-[#EFF6FF] flex items-center justify-center mb-5">
                 <Icon className="h-5 w-5 text-[#2563EB]" />
               </div>
-              <h3
-                className="text-[16px] font-semibold text-[#111111] mb-2"
-                style={{ fontFamily: 'Inter, sans-serif' }}
-              >
+              <h3 className="section-heading text-[16px] font-semibold text-[#111111] mb-2">
                 {title}
               </h3>
               <p className="text-[14px] text-[#555555] leading-[1.6]">{desc}</p>
@@ -307,7 +290,7 @@ function ScreenshotA() {
             </p>
             <h2
               className="text-[32px] font-semibold text-[#111111] leading-tight"
-              style={{ fontFamily: 'Inter, sans-serif' }}
+
             >
               Drag. Drop. Done. Your board, your rules.
             </h2>
@@ -353,7 +336,7 @@ function ScreenshotB() {
             </p>
             <h2
               className="text-[32px] font-semibold text-[#111111] leading-tight"
-              style={{ fontFamily: 'Inter, sans-serif' }}
+
             >
               Describe a goal. Get a full task plan instantly.
             </h2>
@@ -417,10 +400,7 @@ function DeadlinesSection() {
             <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-[#2563EB]">
               Deadline Tracking
             </p>
-            <h2
-              className="text-[40px] md:text-[48px] font-bold text-[#111111] leading-[1.1]"
-              style={{ fontFamily: 'Inter, sans-serif' }}
-            >
+            <h2 className="section-heading text-[40px] md:text-[48px] font-bold text-[#111111] leading-[1.1]">
               Meet deadlines.
               <br />
               Stay consistent.
@@ -474,7 +454,7 @@ function TestimonialsSection() {
         <div className="text-center mb-16">
           <h2
             className="text-[40px] font-bold text-[#111111] leading-tight"
-            style={{ fontFamily: 'Inter, sans-serif' }}
+
           >
             Trusted by teams that ship.
           </h2>
@@ -519,10 +499,7 @@ function CTASection() {
     <section className="py-[120px] bg-[#F7F8FA] border-t border-[#E5E7EB]">
       <Container>
         <div className="text-center max-w-2xl mx-auto space-y-8">
-          <h2
-            className="text-[48px] md:text-[56px] font-bold text-[#111111] leading-[1.1]"
-            style={{ fontFamily: 'Inter, sans-serif' }}
-          >
+          <h2 className="hero-headline text-[48px] md:text-[56px] font-bold text-[#111111] leading-[1.1]">
             Stop managing tasks.
             <br />
             Start shipping work.
@@ -555,10 +532,7 @@ function Footer() {
       <Container>
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2.5">
-            <div className="h-7 w-7 bg-[#111111] rounded-md flex items-center justify-center">
-              <Zap className="h-3.5 w-3.5 text-white" fill="white" />
-            </div>
-            <span className="font-bold text-[14px] text-[#111111]">TaskMaster</span>
+            <TaskMasterLogo size={24} showWordmark />
           </div>
 
           <div className="flex items-center gap-8 text-[13px] text-[#888888]">
@@ -586,10 +560,7 @@ export default function LandingPage() {
   if (session) return <Navigate to="/dashboard" replace />
 
   return (
-    <div
-      className="min-h-screen text-[#111111] selection:bg-[#BFDBFE]"
-      style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-    >
+    <div className="min-h-screen text-[#111111] selection:bg-[#BFDBFE]">
       <Nav mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
 
       <main className="pt-16">
