@@ -19,9 +19,9 @@ import { cn } from '@/lib/utils'
 import TaskMasterLogo from '@/components/ui/TaskMasterLogo'
 import laptopImg from '../assets/laptop.png'
 import tabletImg from '../assets/tablet.png'
-import service1Img from '../assets/service-1.png'
-import service2Img from '../assets/Service-2.jpg'
-import service3Img from '../assets/service-3.png'
+import service1Img from '../assets/Service-1.png'
+import service2Img from '../assets/Service-2.png'
+import service3Img from '../assets/Service-3.png'
 
 /* ── Layout primitives ───────────────────────────────── */
 

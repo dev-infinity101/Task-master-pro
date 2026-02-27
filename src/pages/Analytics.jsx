@@ -283,8 +283,8 @@ function InsightCard({ text }) {
 }
 
 /* ─── AI Analysis Card ───────────────────────── */
-function AIAnalysisCard({ result, isLoading, error, onGenerate }) {
-  const hasResult = result?.headline
+function AIAnalysisCard({ result, isLoading, error, isEmpty, onGenerate }) {
+  const hasResult = typeof result?.headline === 'string' && result.headline.length > 0
   return (
     <div className="bg-card border border-border rounded-lg p-4 transition-colors duration-150 hover:border-primary/30">
       <div className="flex items-center justify-between mb-3">
@@ -316,6 +316,7 @@ function AIAnalysisCard({ result, isLoading, error, onGenerate }) {
         </button>
       </div>
 
+      {/* Loading skeleton */}
       {isLoading && (
         <div className="space-y-2 animate-pulse">
           <div className="h-4 bg-muted rounded w-3/4" />
@@ -325,19 +326,36 @@ function AIAnalysisCard({ result, isLoading, error, onGenerate }) {
         </div>
       )}
 
+      {/* Error state */}
       {!isLoading && error && (
-        <p className="text-xs text-muted-foreground italic">{error}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-xs text-muted-foreground italic flex-1">{error}</p>
+          <button
+            onClick={onGenerate}
+            className="text-xs text-primary underline underline-offset-2 shrink-0"
+          >
+            Retry
+          </button>
+        </div>
       )}
 
-      {!isLoading && hasResult && (
+      {/* Insufficient data */}
+      {!isLoading && !error && isEmpty && (
+        <p className="text-xs text-muted-foreground">
+          Not enough data for AI analysis. Complete a few tasks and try again.
+        </p>
+      )}
+
+      {/* Result */}
+      {!isLoading && !error && !isEmpty && hasResult && (
         <div className="space-y-3">
           <p className="text-sm font-semibold text-foreground">{result.headline}</p>
-          {result.insights?.length > 0 && (
+          {Array.isArray(result.insights) && result.insights.length > 0 && (
             <ul className="space-y-1.5">
               {result.insights.map((insight, i) => (
                 <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                  <span>{insight}</span>
+                  <span>{typeof insight === 'string' ? insight : JSON.stringify(insight)}</span>
                 </li>
               ))}
             </ul>
@@ -345,7 +363,8 @@ function AIAnalysisCard({ result, isLoading, error, onGenerate }) {
         </div>
       )}
 
-      {!isLoading && !error && !hasResult && (
+      {/* Idle prompt */}
+      {!isLoading && !error && !isEmpty && !hasResult && (
         <p className="text-sm text-muted-foreground">
           Click <span className="font-medium text-foreground">Generate AI Analysis</span> to get data-driven insights about your project performance.
         </p>
@@ -412,7 +431,7 @@ export default function Analytics() {
   const { loading } = useProjectLoader()
 
   // AI narration
-  const { result: aiResult, isLoading: aiLoading, error: aiError, refresh: aiRefresh } = useAIAnalytics()
+  const { result: aiResult, isLoading: aiLoading, error: aiError, isEmpty: aiEmpty, refresh: aiRefresh } = useAIAnalytics()
 
   // ── All tasks for the active project (flat array from store) ──────────
   const allProjectTasks = useMemo(
@@ -653,6 +672,7 @@ export default function Analytics() {
         result={aiResult}
         isLoading={aiLoading}
         error={aiError}
+        isEmpty={aiEmpty}
         onGenerate={() => aiRefresh(buildAIMetrics())}
       />
 

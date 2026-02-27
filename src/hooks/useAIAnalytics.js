@@ -1,64 +1,30 @@
 /**
- * useAIAnalytics.js — Analytics Narration hook
+ * useAIAnalytics.js — Analytics page narration hook
  *
- * Calls the edge function in 'narrate' mode with analytics metrics.
- * Result is kept fully local — never stored in Zustand.
+ * Thin wrapper around useAIFeatures({ narrate }) so the
+ * Analytics page doesn't need to import useAIFeatures directly.
+ * Keeps the API surface identical to what Analytics.jsx already expects:
+ *   { result, isLoading, error, isEmpty, refresh }
  */
 
-import { useState, useCallback } from 'react'
-import { supabase } from '../lib/supabase'
-import { toast } from 'sonner'
+import { useCallback } from 'react'
+import { useAIFeatures } from './useAIFeatures'
 
-const EDGE_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`
-
-/**
- * @typedef {{ headline: string, insights: string[] }} NarrateResult
- *
- * @param {object} metricsRef - pass the latest analytics metrics each call
- * @returns {{ result: NarrateResult|null, isLoading: boolean, error: string|null, refresh: (metrics: object) => Promise<void> }}
- */
 export function useAIAnalytics() {
-    const [result, setResult] = useState(null)
-    const [isLoading, setIsLoading] = useState(false)
-    const [error, setError] = useState(null)
+    const { narrate, generateNarrate, clearMode } = useAIFeatures()
 
-    const refresh = useCallback(async (metrics) => {
-        setIsLoading(true)
-        setError(null)
+    const refresh = useCallback((metrics) => {
+        return generateNarrate(metrics)
+    }, [generateNarrate])
 
-        try {
-            const { data: { session } } = await supabase.auth.getSession()
-            const token = session?.access_token
-            if (!token) throw new Error('Not authenticated')
+    const clear = useCallback(() => clearMode('narrate'), [clearMode])
 
-            const res = await fetch(EDGE_BASE, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ mode: 'narrate', payload: metrics }),
-            })
-
-            if (res.status === 429) {
-                toast.error('Rate limit reached — please wait a moment.')
-                return
-            }
-            if (!res.ok) throw new Error(`Edge function error: ${res.status}`)
-
-            const data = await res.json()
-
-            if (data?.error === 'INSUFFICIENT_DATA') {
-                setError('Not enough data to generate insights. Add more tasks and try again.')
-                return
-            }
-
-            setResult(data)
-        } catch (err) {
-            console.error('AI analytics narration error:', err)
-            setError('AI narration is unavailable. Please try again.')
-            toast.error('Could not generate AI analysis.')
-        } finally {
-            setIsLoading(false)
-        }
-    }, [])
-
-    return { result, isLoading, error, refresh }
+    return {
+        result: narrate.data,
+        isLoading: narrate.isLoading,
+        error: narrate.error,
+        isEmpty: narrate.isEmpty,
+        refresh,
+        clear,
+    }
 }
