@@ -30,10 +30,5 @@ export const supabase = supabaseConfigured
       autoRefreshToken: true,   // SDK refreshes JWT before expiry
       detectSessionInUrl: true,   // pick up #access_token from email links
     },
-    realtime: {
-      params: {
-        eventsPerSecond: 10,      // stay well under the free-tier limit
-      },
-    },
   })
   : null
