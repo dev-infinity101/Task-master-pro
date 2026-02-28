@@ -55,8 +55,8 @@ export default function KanbanColumn({ column, tasks }) {
   return (
     <div ref={setNodeRef} className="flex flex-col w-80 shrink-0 h-full">
       <Card className={cn(
-        "flex flex-col h-full bg-white/80 dark:bg-white/5 border-none shadow-none rounded-2xl transition-colors",
-        isOver && "bg-accent/10"
+        "flex flex-col h-full bg-white/80 dark:bg-[#141414] border border-transparent dark:border-[#242424] shadow-none rounded-2xl transition-colors",
+        isOver && "bg-accent/10 dark:bg-[#1a1a1a]"
       )}>
         {/* Column Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0">

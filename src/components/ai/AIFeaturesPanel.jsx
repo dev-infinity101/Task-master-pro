@@ -17,12 +17,13 @@
 
 import { useState, useCallback, useMemo } from 'react'
 import {
-    Calendar, ListTodo, BarChart2, Sparkles,
+    Calendar, ListTodo, BarChart2,
     Loader2, RefreshCw, AlertCircle, ChevronRight,
     CheckCircle2, Clock, AlertTriangle, X,
     TrendingUp, TrendingDown, ArrowRight, Zap,
     BookOpen, ClipboardList,
 } from 'lucide-react'
+import EnergyCubeIcon from '../ui/EnergyCubeIcon'
 import { useAIFeatures } from '../../hooks/useAIFeatures'
 import useStore from '../../store/store'
 import { useShallow } from 'zustand/react/shallow'
@@ -294,19 +295,32 @@ function DecomposeResult({ data }) {
                 </div>
             )}
             <ol className="space-y-1.5">
-                {subtasks.map((subtask, i) => (
-                    <li
-                        key={i}
-                        className="flex items-start gap-2.5 bg-muted/40 rounded-xl px-3 py-2.5 text-xs"
-                    >
-                        <span className="text-[10px] font-bold text-primary/50 w-4 shrink-0 mt-0.5 tabular-nums">
-                            {i + 1}.
-                        </span>
-                        <span className="text-foreground leading-snug flex-1">
-                            {typeof subtask === 'string' ? subtask : (subtask?.title ?? JSON.stringify(subtask))}
-                        </span>
-                    </li>
-                ))}
+                {subtasks.map((subtask, i) => {
+                    // Normalise: backend may return string or { title, description } object
+                    const title = typeof subtask === 'string'
+                        ? subtask
+                        : (typeof subtask?.title === 'string' ? subtask.title : null)
+                    const description = typeof subtask === 'object' && typeof subtask?.description === 'string'
+                        ? subtask.description
+                        : null
+                    if (!title) return null
+                    return (
+                        <li
+                            key={i}
+                            className="flex items-start gap-2.5 bg-muted/40 rounded-xl px-3 py-2.5 text-xs"
+                        >
+                            <span className="text-[10px] font-bold text-primary/50 w-4 shrink-0 mt-0.5 tabular-nums">
+                                {i + 1}.
+                            </span>
+                            <div className="flex-1 min-w-0">
+                                <span className="text-foreground leading-snug font-medium block">{title}</span>
+                                {description && (
+                                    <span className="text-muted-foreground leading-snug mt-0.5 block">{description}</span>
+                                )}
+                            </div>
+                        </li>
+                    )
+                })}
             </ol>
         </div>
     )
@@ -428,7 +442,7 @@ function DecomposeInput({ onSubmit, onCancel, isLoading }) {
                 >
                     {isLoading
                         ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Decomposing…</>
-                        : <><Sparkles className="w-3.5 h-3.5" />Decompose</>}
+                        : <><EnergyCubeIcon size={20} className="mr-1" />Decompose</>}
                 </Button>
             </div>
         </form>
@@ -519,9 +533,9 @@ export default function AIFeaturesPanel() {
     }, [tasks, activeProjectId, generateReview])
 
     const handleDecomposeSubmit = useCallback((payload) => {
-        generateDecompose(payload).then(() => {
-            setDecomposeInputOpen(false)
-        })
+        // Close input immediately so user sees the loading skeleton right away
+        setDecomposeInputOpen(false)
+        generateDecompose(payload)
     }, [generateDecompose])
 
     // ── Runtime analysis of current tab state ─────────────────────────────────
@@ -538,8 +552,8 @@ export default function AIFeaturesPanel() {
     // ── Tab config ─────────────────────────────────────────────────────────────
 
     const TABS = [
-        { id: 'plan', label: 'Daily Plan', icon: Calendar, color: 'bg-indigo-500' },
-        { id: 'decompose', label: 'Decompose', icon: ListTodo, color: 'bg-violet-500' },
+        { id: 'plan', label: 'Daily Plan', icon: Calendar, color: 'bg-blue-500' },
+        { id: 'decompose', label: 'Decompose', icon: ListTodo, color: 'bg-orange-500' },
         { id: 'review', label: 'Weekly', icon: BookOpen, color: 'bg-emerald-600' },
     ]
 
@@ -603,7 +617,7 @@ function PlanPanel({ state, onGenerate, onClear }) {
     return (
         <FeatureCard
             icon={Calendar}
-            iconGradient="bg-gradient-to-br from-indigo-500 to-blue-600"
+            iconGradient="bg-gradient-to-br from-blue-500 to-cyan-600"
             title="Daily Auto-Planning"
             badge="AI-powered execution plan"
             onClear={data || error || isEmpty ? onClear : undefined}
@@ -627,8 +641,8 @@ function PlanPanel({ state, onGenerate, onClear }) {
             {!isLoading && !error && !isEmpty && data && <DailyPlanResult data={data} />}
             {!isLoading && !error && !isEmpty && !data && (
                 <div className="flex flex-col items-center gap-4 py-4 text-center">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-                        <Calendar className="w-6 h-6 text-indigo-500" />
+                    <div className="flex items-center justify-center">
+                        <EnergyCubeIcon size={48} className="text-blue-500" />
                     </div>
                     <div>
                         <p className="text-sm font-medium text-foreground mb-1">Plan your day with AI</p>
@@ -639,9 +653,9 @@ function PlanPanel({ state, onGenerate, onClear }) {
                     <Button
                         size="sm"
                         onClick={onGenerate}
-                        className="gap-1.5 h-9 bg-indigo-600 hover:bg-indigo-700 text-white"
+                        className="gap-1.5 h-9 bg-blue-600 hover:bg-blue-700 text-white"
                     >
-                        <Sparkles className="w-3.5 h-3.5" />
+                        <EnergyCubeIcon size={20} className="mr-1" />
                         Generate Daily Plan
                     </Button>
                 </div>
@@ -658,7 +672,7 @@ function DecomposePanel({ state, inputOpen, onOpenInput, onCancelInput, onSubmit
     return (
         <FeatureCard
             icon={ListTodo}
-            iconGradient="bg-gradient-to-br from-violet-500 to-purple-700"
+            iconGradient="bg-gradient-to-br from-orange-500 to-amber-600"
             title="Smart Task Decomposition"
             badge="Break any goal into steps"
             onClear={data || error || isEmpty ? onClear : undefined}
@@ -682,8 +696,8 @@ function DecomposePanel({ state, inputOpen, onOpenInput, onCancelInput, onSubmit
             {!isLoading && !error && !isEmpty && data && <DecomposeResult data={data} />}
             {!isLoading && !error && !isEmpty && !data && !inputOpen && (
                 <div className="flex flex-col items-center gap-4 py-4 text-center">
-                    <div className="w-12 h-12 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
-                        <ListTodo className="w-6 h-6 text-violet-500" />
+                    <div className="flex items-center justify-center">
+                        <EnergyCubeIcon size={48} className="text-orange-500" />
                     </div>
                     <div>
                         <p className="text-sm font-medium text-foreground mb-1">Decompose any task</p>
@@ -694,9 +708,9 @@ function DecomposePanel({ state, inputOpen, onOpenInput, onCancelInput, onSubmit
                     <Button
                         size="sm"
                         onClick={onOpenInput}
-                        className="gap-1.5 h-9 bg-violet-600 hover:bg-violet-700 text-white"
+                        className="gap-1.5 h-9 bg-orange-600 hover:bg-orange-700 text-white"
                     >
-                        <Sparkles className="w-3.5 h-3.5" />
+                        <EnergyCubeIcon size={20} className="mr-1" />
                         Decompose a Task
                     </Button>
                 </div>
@@ -744,8 +758,8 @@ function ReviewPanel({ state, onGenerate, onClear }) {
             {!isLoading && !error && !isEmpty && data && <WeeklyReviewResult data={data} />}
             {!isLoading && !error && !isEmpty && !data && (
                 <div className="flex flex-col items-center gap-4 py-4 text-center">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                        <BookOpen className="w-6 h-6 text-emerald-600" />
+                    <div className="flex items-center justify-center">
+                        <EnergyCubeIcon size={48} className="text-emerald-500" />
                     </div>
                     <div>
                         <p className="text-sm font-medium text-foreground mb-1">Get your weekly review</p>
@@ -758,7 +772,7 @@ function ReviewPanel({ state, onGenerate, onClear }) {
                         onClick={onGenerate}
                         className="gap-1.5 h-9 bg-emerald-600 hover:bg-emerald-700 text-white"
                     >
-                        <Sparkles className="w-3.5 h-3.5" />
+                        <EnergyCubeIcon size={20} className="mr-1" />
                         Generate Review
                     </Button>
                 </div>

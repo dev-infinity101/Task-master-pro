@@ -97,50 +97,48 @@
   }
 
   .dark {
-    /* Dark Mode — Deep Black Aesthetic */
-    --background: 0 0% 0%;
-    /* Dark Black */
-    --foreground: 0 0% 100%;
-    /* Pure White Text */
+    /* Dark Mode — Premium Blackened Aesthetic */
+    --background: 0 0% 6%;
+    /* #0F0F0F — Near-black page background */
+    --foreground: 0 0% 96%;
+    /* #F5F5F5 — Off-white text */
 
     --card: 0 0% 3%;
-    /* Deeper Black Card */
-    --card-foreground: 0 0% 100%;
+    /* #080808 — Pure-black task/kanban cards */
+    --card-foreground: 0 0% 96%;
 
-    --popover: 0 0% 0%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 96%;
 
     --primary: 221 83% 53%;
     /* Keep core blue */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 80%;
+    --secondary: 0 0% 11%;
+    /* Slightly elevated surface */
+    --secondary-foreground: 0 0% 75%;
 
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 64%;
+    --muted: 0 0% 11%;
+    --muted-foreground: 0 0% 55%;
+    /* #8C8C8C — dimmer for secondary text */
 
-    --accent: 221 83% 53%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 0 0% 13%;
+    --accent-foreground: 0 0% 96%;
 
-    --destructive: 0 63% 31%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 12%;
-    /* Visible but dark border on black */
-    --input: 0 0% 12%;
+    --border: 0 0% 16%;
+    /* #292929 — visible border on black */
+    --input: 0 0% 14%;
     --ring: 221 83% 53%;
 
-    /* ── Brand Logo Design Tokens (Dark) ──────────────
+    /* ── Brand Logo Design Tokens (Dark) ──
        Dark mode: solid blue bg, white border, white icon
-       Matches reference: solid blue square + white hourglass
-    ─────────────────────────────────────────────────── */
+    ─────────────────────────────────────── */
     --logo-bg: #2563EB;
-    /* solid primary blue fill    */
     --logo-border: #FFFFFF;
-    /* white border stroke         */
     --logo-icon: #FFFFFF;
-    /* white hourglass icon        */
   }
 }
 

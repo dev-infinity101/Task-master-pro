@@ -7,11 +7,11 @@ import {
   LayoutGrid,
   ListTodo,
   Brain,
-  Sparkles,
   ShieldCheck,
   BarChart2,
   CheckCircle2,
 } from 'lucide-react'
+import EnergyCubeIcon from '../components/ui/EnergyCubeIcon'
 import { useState } from 'react'
 import useStore from '../store/store'
 import { Button } from '@/components/ui/button'
@@ -209,7 +209,7 @@ const FEATURES = [
     desc: 'Describe a goal and let the AI break it into prioritized, actionable tasks automatically.',
   },
   {
-    icon: Sparkles,
+    icon: EnergyCubeIcon,
     title: 'Real-time sync',
     desc: 'Every update appears instantly across your team — no refreshing, no conflict, no delay.',
   },
@@ -250,11 +250,17 @@ function FeaturesSection() {
           {FEATURES.map(({ icon: Icon, title, desc }) => (
             <div
               key={title}
-              className="p-8 bg-white border border-[#E5E7EB] rounded-xl hover:border-[#2563EB]/30 hover:shadow-sm transition-all"
+              className="p-8 bg-white border border-[#E5E7EB] rounded-xl hover:border-[#2563EB]/30 hover:shadow-sm transition-all group"
             >
-              <div className="w-10 h-10 rounded-lg bg-[#EFF6FF] flex items-center justify-center mb-5">
-                <Icon className="h-5 w-5 text-[#2563EB]" />
-              </div>
+              {Icon === EnergyCubeIcon ? (
+                <div className="flex items-center justify-center mb-5 shrink-0 overflow-hidden w-10 h-10">
+                  <Icon size={32} className="text-primary" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-lg bg-[#EFF6FF] flex items-center justify-center mb-5">
+                  <Icon className="h-5 w-5 text-[#2563EB]" />
+                </div>
+              )}
               <h3 className="section-heading text-[16px] font-semibold text-[#111111] mb-2">
                 {title}
               </h3>

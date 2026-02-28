@@ -15,11 +15,69 @@ import useStore from '../store/store'
 import { toast } from 'sonner'
 
 const EDGE_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-/** Get a fresh JWT from Supabase for edge function auth */
+/**
+ * Get a valid JWT for edge function calls.
+ * Reads from Zustand store first — it is always up to date because useAuth.js
+ * writes every new session to the store via onAuthStateChange (TOKEN_REFRESHED).
+ * Falls back to force-refreshing via Supabase SDK if the store token is stale.
+ */
 async function getAccessToken() {
-  const { data: { session } } = await supabase.auth.getSession()
-  return session?.access_token ?? null
+  // Primary: read fresh token directly from Zustand store
+  const storeSession = useStore.getState().session
+  if (storeSession?.access_token) {
+    const nowSeconds = Math.floor(Date.now() / 1000)
+    const expiresAt = storeSession.expires_at ?? 0
+    if (expiresAt - nowSeconds > 90) return storeSession.access_token
+  }
+
+  // Fallback: force a network refresh to guarantee freshness
+  try {
+    const { data: { session }, error } = await supabase.auth.refreshSession()
+    if (error || !session) return null
+    return session.access_token
+  } catch {
+    return null
+  }
+}
+
+// ─── Edge function headers helper ─────────────────────────────────────────────
+// Both headers are REQUIRED when calling Supabase Edge Functions via raw fetch():
+//   Authorization: Bearer <user_jwt>  — authenticates the user
+//   apikey: <anon_key>                — identifies the project at the gateway level
+// Without apikey the Supabase gateway returns 401 before the function even runs.
+function edgeHeaders(token) {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+    'apikey': SUPABASE_ANON_KEY,
+  }
+}
+
+// ─── Helper: call edge with optional 401-retry ────────────────────────────────
+async function fetchEdge(body, signal) {
+  const makeReq = (token) => fetch(EDGE_BASE, {
+    method: 'POST',
+    headers: edgeHeaders(token),
+    body: JSON.stringify(body),
+    signal,
+  })
+
+  const token = await getAccessToken()
+  if (!token) throw new Error('Not authenticated')
+
+  let res = await makeReq(token)
+
+  // 401 retry: force token refresh and try once more
+  if (res.status === 401) {
+    try {
+      const { data: { session } } = await supabase.auth.refreshSession()
+      if (session?.access_token) res = await makeReq(session.access_token)
+    } catch { /* fall through */ }
+  }
+
+  return res
 }
 
 // ─── useAI (Chat + Structured) ────────────────────────────────────────────────
@@ -40,17 +98,14 @@ export function useAI() {
     setStructuredResult(null)
 
     try {
-      const token = await getAccessToken()
-      if (!token) throw new Error('Not authenticated')
-
-      const res = await fetch(EDGE_BASE, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ mode, payload }),
-      })
+      const res = await fetchEdge({ mode, payload })
 
       if (res.status === 429) {
         toast.error('Too many requests — please wait a moment.')
+        return null
+      }
+      if (res.status === 401) {
+        toast.error('Session expired. Please sign out and sign back in.')
         return null
       }
       if (!res.ok) throw new Error(`Edge function error: ${res.status}`)
@@ -92,22 +147,22 @@ export function useAI() {
     abortRef.current = new AbortController()
 
     try {
-      const token = await getAccessToken()
-      if (!token) throw new Error('Not authenticated')
-
-      const res = await fetch(EDGE_BASE, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
+      const res = await fetchEdge(
+        {
           mode: 'chat',
           messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
           context,
-        }),
-        signal: abortRef.current.signal,
-      })
+        },
+        abortRef.current.signal
+      )
 
       if (res.status === 429) {
         toast.error('Rate limit reached — please wait a minute.')
+        setMessages(prev => prev.slice(0, -1))
+        return
+      }
+      if (res.status === 401) {
+        toast.error('Session expired. Please sign out and sign back in.')
         setMessages(prev => prev.slice(0, -1))
         return
       }

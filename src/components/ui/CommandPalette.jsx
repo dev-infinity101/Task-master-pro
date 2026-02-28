@@ -16,12 +16,12 @@ import {
   LayoutDashboard,
   BarChart2,
   Settings,
-  Sparkles,
   Plus,
   ArrowRight,
   Clock,
   Flag,
 } from 'lucide-react'
+import EnergyCubeIcon from './EnergyCubeIcon'
 import { useNavigate } from 'react-router-dom'
 import { searchTasks } from '../../lib/database'
 import useStore from '../../store/store'
@@ -39,7 +39,7 @@ const STATIC_ACTIONS = [
   { id: 'nav-dashboard', type: 'nav', icon: LayoutDashboard, label: 'Go to Dashboard', path: '/dashboard' },
   { id: 'nav-analytics', type: 'nav', icon: BarChart2, label: 'Go to Analytics', path: '/analytics' },
   { id: 'nav-settings', type: 'nav', icon: Settings, label: 'Go to Settings', path: '/settings' },
-  { id: 'action-ai', type: 'action', icon: Sparkles, label: 'Open AI Assistant' },
+  { id: 'action-ai', type: 'action', icon: EnergyCubeIcon, label: 'Open AI Assistant' },
   { id: 'action-add', type: 'action', icon: Plus, label: 'Create new task' },
 ]
 
@@ -218,8 +218,8 @@ export default function CommandPalette() {
                             key={item.id}
                             onClick={() => handleSelect(item)}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${selectedIdx === globalIdx
-                                ? 'bg-primary/10 text-foreground'
-                                : 'text-foreground hover:bg-accent'
+                              ? 'bg-primary/10 text-foreground'
+                              : 'text-foreground hover:bg-accent'
                               }`}
                           >
                             <Flag className={`w-3.5 h-3.5 shrink-0 ${PRIORITY_COLORS[item.priority ?? 'none']}`} />
@@ -252,8 +252,8 @@ export default function CommandPalette() {
                             key={item.id}
                             onClick={() => handleSelect(item)}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${selectedIdx === globalIdx
-                                ? 'bg-primary/10 text-foreground'
-                                : 'text-foreground hover:bg-accent'
+                              ? 'bg-primary/10 text-foreground'
+                              : 'text-foreground hover:bg-accent'
                               }`}
                           >
                             <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0">

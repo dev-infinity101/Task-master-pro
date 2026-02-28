@@ -17,11 +17,30 @@ const missingSupabase = () => ({ data: null, error: new Error('Supabase is not c
 
 export async function signUp({ email, password, fullName }) {
   if (!supabaseConfigured) return missingSupabase()
-  return supabase.auth.signUp({
+
+  const res = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: {
+      data: { full_name: fullName },
+      // By omitting emailRedirectTo, we force Supabase to use the Site URL 
+      // configured in the dashboard. If we pass a URL here that isn't exactly
+      // matched in the allowed Redirect URLs list, Supabase silently drops the email!
+    },
   })
+
+  // Supabase silently drops duplicate signups by default (returning 200 OK 
+  // but sending NO email) to prevent user enumeration. We can detect this 
+  // if identities array is completely empty. If so, we proactively resend the email.
+  if (res.data?.user && res.data.user.identities && res.data.user.identities.length === 0) {
+    const resend = await supabase.auth.resend({
+      type: 'signup',
+      email: email,
+    })
+    if (resend.error) return { data: null, error: resend.error }
+  }
+
+  return res
 }
 
 export async function signIn({ email, password }) {

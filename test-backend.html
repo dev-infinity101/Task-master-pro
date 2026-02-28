@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>OpenRouter + Edge Function Test</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: #0f1117;
+            color: #e2e8f0;
+            padding: 32px;
+            min-height: 100vh
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px
+        }
+
+        p.sub {
+            color: #64748b;
+            font-size: .875rem;
+            margin-bottom: 32px
+        }
+
+        .card {
+            background: #1e2330;
+            border: 1px solid #2d3748;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px
+        }
+
+        h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: .05em
+        }
+
+        label {
+            display: block;
+            font-size: .8rem;
+            color: #64748b;
+            margin-bottom: 4px;
+            margin-top: 12px
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            background: #0f1117;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: #e2e8f0;
+            font-size: .875rem;
+            outline: none
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: #6366f1
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px
+        }
+
+        button {
+            cursor: pointer;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: .875rem;
+            font-weight: 600;
+            border: none;
+            transition: opacity .15s
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: #fff
+        }
+
+        .btn-secondary {
+            background: #374151;
+            color: #e2e8f0
+        }
+
+        button:hover {
+            opacity: .85
+        }
+
+        button:disabled {
+            opacity: .5;
+            cursor: not-allowed
+        }
+
+        .result {
+            margin-top: 16px;
+            background: #0f1117;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            padding: 16px;
+            font-size: .8rem;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            min-height: 60px
+        }
+
+        .ok {
+            color: #34d399
+        }
+
+        .err {
+            color: #f87171
+        }
+
+        .warn {
+            color: #fbbf24
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px
+        }
+
+        .dot-ok {
+            background: #34d399
+        }
+
+        .dot-err {
+            background: #f87171
+        }
+
+        .dot-warn {
+            background: #fbbf24
+        }
+
+        .dot-idle {
+            background: #4b5563
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: .75rem;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #1e2330;
+            border: 1px solid #374151;
+            margin-bottom: 8px
+        }
+    </style>
+</head>
+
+<body>
+    <h1>TaskMaster Pro — Backend Test Suite</h1>
+    <p class="sub">Run these tests in order to diagnose OpenRouter + Supabase Edge Function issues.</p>
+
+    <!-- ── TEST 1: Direct OpenRouter ─────────────────────────────────── -->
+    <div class="card">
+        <h2>Test 1 — Direct OpenRouter API</h2>
+        <p style="font-size:.8rem;color:#64748b;margin-bottom:12px">
+            Calls OpenRouter directly from this page. If this passes, your API key and model are valid.
+            If it fails, the problem is with your OpenRouter account/key — not Supabase.
+        </p>
+        <label>OpenRouter API Key</label>
+        <input id="or-key" type="password" placeholder="sk-or-v1-..." />
+        <label>Model (copy exactly from OpenRouter dashboard)</label>
+        <input id="or-model" value="arcee-ai/trinity-large-preview:free" />
+        <label>Test prompt</label>
+        <input id="or-prompt" value="Say 'OK' in one word." />
+        <div class="row">
+            <button class="btn-primary" onclick="testOpenRouter()">▶ Run Test 1</button>
+        </div>
+        <div class="result" id="or-result">Results will appear here…</div>
+    </div>
+
+    <!-- ── TEST 2: Edge Function (no auth) ───────────────────────────── -->
+    <div class="card">
+        <h2>Test 2 — Supabase Edge Function (chat mode)</h2>
+        <p style="font-size:.8rem;color:#64748b;margin-bottom:12px">
+            Calls your deployed <code>ai-assistant</code> edge function. Requires your Supabase URL,
+            anon key, and a valid user JWT. If Test 1 passes but this fails, the issue is
+            in the edge function auth or OpenRouter secret.
+        </p>
+        <label>Supabase Project URL</label>
+        <input id="sb-url" placeholder="https://xxxx.supabase.co" />
+        <label>Supabase Anon Key</label>
+        <input id="sb-anon" type="password" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." />
+        <label>User JWT (copy from DevTools → Application → localStorage → sb-...-auth-token → access_token)</label>
+        <textarea id="sb-jwt" rows="3" placeholder="eyJhbGci..."></textarea>
+        <div class="row">
+            <button class="btn-primary" onclick="testEdgeFunction()">▶ Run Test 2</button>
+            <button class="btn-secondary" onclick="autoFillFromLocalStorage()">🔑 Auto-fill from localStorage</button>
+        </div>
+        <div class="result" id="ef-result">Results will appear here…</div>
+    </div>
+
+    <!-- ── TEST 3: Realtime WebSocket ────────────────────────────────── -->
+    <div class="card">
+        <h2>Test 3 — Realtime WebSocket handshake</h2>
+        <p style="font-size:.8rem;color:#64748b;margin-bottom:12px">
+            Opens a raw WebSocket to your Supabase Realtime endpoint. A 101 response means
+            the connection is healthy. A 401 means the anon key in the URL is wrong.
+        </p>
+        <label>Supabase Project URL (same as above)</label>
+        <input id="ws-url" placeholder="https://xxxx.supabase.co" />
+        <label>Supabase Anon Key</label>
+        <input id="ws-anon" type="password" placeholder="eyJ..." />
+        <div class="row">
+            <button class="btn-primary" onclick="testWebSocket()">▶ Run Test 3</button>
+        </div>
+        <div class="result" id="ws-result">Results will appear here…</div>
+    </div>
+
+    <script>
+        function log(id, msg, cls = '') {
+            const el = document.getElementById(id)
+            el.textContent += (el.textContent === 'Results will appear here…' ? '' : '\n') + msg
+            if (cls) el.className = 'result ' + cls
+        }
+        function clear(id) {
+            document.getElementById(id).textContent = ''
+            document.getElementById(id).className = 'result'
+        }
+
+        // ── Test 1: Direct OpenRouter ────────────────────────────────────
+        async function testOpenRouter() {
+            clear('or-result')
+            const key = document.getElementById('or-key').value.trim()
+            const model = document.getElementById('or-model').value.trim()
+            const prompt = document.getElementById('or-prompt').value.trim()
+
+            if (!key) { log('or-result', '❌ Enter your OpenRouter API key first.', 'err'); return }
+
+            log('or-result', '⏳ Sending request to OpenRouter...')
+            try {
+                const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${key}`,
+                        'Content-Type': 'application/json',
+                        'HTTP-Referer': window.location.origin,
+                        'X-Title': 'TaskMaster Test',
+                    },
+                    body: JSON.stringify({
+                        model,
+                        messages: [{ role: 'user', content: prompt }],
+                        max_tokens: 50,
+                    }),
+                })
+                const json = await res.json()
+                if (!res.ok) {
+                    log('or-result', `❌ HTTP ${res.status}: ${JSON.stringify(json, null, 2)}`, 'err')
+                    return
+                }
+                const reply = json.choices?.[0]?.message?.content ?? '(empty)'
+                log('or-result', `✅ SUCCESS — Model responded: "${reply}"`, 'ok')
+                log('or-result', `\nModel used: ${json.model}`)
+                log('or-result', `Tokens: ${json.usage?.total_tokens ?? 'n/a'}`)
+            } catch (e) {
+                log('or-result', `❌ Network error: ${e.message}`, 'err')
+            }
+        }
+
+        // ── Test 2: Edge Function ────────────────────────────────────────
+        async function testEdgeFunction() {
+            clear('ef-result')
+            const url = document.getElementById('sb-url').value.trim().replace(/\/$/, '')
+            const anon = document.getElementById('sb-anon').value.trim()
+            const jwt = document.getElementById('sb-jwt').value.trim()
+
+            if (!url || !anon) { log('ef-result', '❌ Fill Supabase URL and anon key.', 'err'); return }
+
+            const edgeUrl = `${url}/functions/v1/ai-assistant`
+            log('ef-result', `⏳ Calling ${edgeUrl}...`)
+
+            const headers = {
+                'Content-Type': 'application/json',
+                'apikey': anon,
+            }
+            if (jwt) headers['Authorization'] = `Bearer ${jwt}`
+
+            try {
+                const res = await fetch(edgeUrl, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        mode: 'chat',
+                        messages: [{ role: 'user', content: 'Say OK in one word.' }],
+                    }),
+                })
+
+                log('ef-result', `HTTP ${res.status} ${res.statusText}`)
+
+                const text = await res.text()
+                if (!res.ok) {
+                    log('ef-result', `❌ Error response:\n${text}`, 'err')
+                    if (res.status === 401) {
+                        log('ef-result', '\n💡 401 Hints:')
+                        log('ef-result', '  • SUPABASE_JWT_SECRET might not be set as a secret')
+                        log('ef-result', '  • Try deploying with: supabase functions deploy ai-assistant --no-verify-jwt')
+                        log('ef-result', '  • Make sure your JWT above is fresh (< 1 hour old)')
+                    }
+                    if (res.status === 500) {
+                        log('ef-result', '\n💡 500 Hints:')
+                        log('ef-result', '  • OPENROUTER_API_KEY secret might not be set in Supabase dashboard')
+                        log('ef-result', '  • Check Function Logs in Supabase dashboard for the exact error')
+                    }
+                    return
+                }
+
+                log('ef-result', `✅ Edge function responded successfully!`, 'ok')
+                // Try to read a bit of the response
+                try {
+                    const json = JSON.parse(text)
+                    log('ef-result', `\nResponse keys: ${Object.keys(json).join(', ')}`)
+                } catch {
+                    log('ef-result', `\nStream response (first 200 chars):\n${text.slice(0, 200)}`)
+                }
+            } catch (e) {
+                log('ef-result', `❌ Network error: ${e.message}`, 'err')
+            }
+        }
+
+        // ── Test 3: WebSocket ────────────────────────────────────────────
+        function testWebSocket() {
+            clear('ws-result')
+            const url = document.getElementById('ws-url').value.trim().replace(/\/$/, '')
+            const anon = document.getElementById('ws-anon').value.trim()
+
+            if (!url || !anon) { log('ws-result', '❌ Fill Supabase URL and anon key.', 'err'); return }
+
+            const wsUrl = url
+                .replace('https://', 'wss://')
+                .replace('http://', 'ws://')
+                + `/realtime/v1/websocket?apikey=${anon}&vsn=1.0.0`
+
+            log('ws-result', `⏳ Opening WebSocket to:\n${wsUrl.replace(anon, anon.slice(0, 20) + '...')}`)
+
+            const ws = new WebSocket(wsUrl)
+            const timeout = setTimeout(() => {
+                log('ws-result', '❌ Timed out after 8 seconds.', 'err')
+                ws.close()
+            }, 8000)
+
+            ws.onopen = () => {
+                clearTimeout(timeout)
+                log('ws-result', '✅ WebSocket connected! (101 Switching Protocols)', 'ok')
+                log('ws-result', '\nYour anon key and Realtime endpoint are working correctly.')
+                log('ws-result', 'Any 401s in your app are from channel auth (JWT), not the connection.')
+                setTimeout(() => ws.close(), 1000)
+            }
+            ws.onerror = (e) => {
+                clearTimeout(timeout)
+                log('ws-result', '❌ WebSocket error — likely 401 (wrong anon key).', 'err')
+                log('ws-result', '\n💡 Check that VITE_SUPABASE_ANON_KEY in your .env matches the Supabase dashboard.')
+            }
+            ws.onclose = (e) => {
+                if (e.code !== 1000) {
+                    log('ws-result', `\nClosed with code ${e.code}: ${e.reason || 'no reason'}`)
+                }
+            }
+        }
+
+        // ── Auto-fill from localStorage ──────────────────────────────────
+        function autoFillFromLocalStorage() {
+            try {
+                // Find the Supabase session in localStorage
+                const keys = Object.keys(localStorage)
+                const sbKey = keys.find(k => k.includes('auth-token') && k.startsWith('sb-'))
+                if (!sbKey) {
+                    alert('No Supabase session found in localStorage.\nMake sure you are logged into the app first, then open this file.')
+                    return
+                }
+                const raw = JSON.parse(localStorage.getItem(sbKey))
+                const session = raw?.currentSession ?? raw
+                if (session?.access_token) {
+                    document.getElementById('sb-jwt').value = session.access_token
+                    alert('✅ JWT filled from localStorage!')
+                } else {
+                    alert('Found session key but no access_token. Try logging in to the app again.')
+                }
+            } catch (e) {
+                alert('Could not read localStorage: ' + e.message)
+            }
+        }
+    </script>
+</body>
+
+</html>

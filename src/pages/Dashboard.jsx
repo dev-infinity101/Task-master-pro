@@ -12,8 +12,9 @@ import {
   Search,
   Loader2,
   BarChart2,
-  Sparkles,
+  ChevronRight,
 } from 'lucide-react'
+import EnergyCubeIcon from '../components/ui/EnergyCubeIcon'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/store'
 import { useShallow } from 'zustand/react/shallow'
@@ -211,17 +212,17 @@ export default function Dashboard() {
   const VIEW_TABS = [
     { id: 'kanban', label: 'Board', icon: LayoutGrid },
     { id: 'list', label: 'List', icon: List },
-    { id: 'ai', label: 'AI', icon: Sparkles },
+    { id: 'ai', label: 'AI', icon: EnergyCubeIcon },
   ]
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F7F8FA] text-[#111111]">
+    <div className="flex h-screen overflow-hidden bg-[#F7F8FA] dark:bg-background text-[#111111] dark:text-foreground">
 
       {/* ──────────── SIDEBAR (permanent, white) ──────────── */}
-      <aside className="w-[260px] shrink-0 flex flex-col border-r border-[#E5E7EB] bg-white">
+      <aside className="w-[260px] shrink-0 flex flex-col border-r border-[#E5E7EB] dark:border-[#1F1F1F] bg-white dark:bg-[#0D0D0D]">
 
         {/* Logo */}
-        <div className="flex items-center px-5 h-16 border-b border-[#E5E7EB]">
+        <div className="flex items-center px-5 h-16 border-b border-[#E5E7EB] dark:border-border">
           <TaskMasterLogo size={32} variant="sidebar" />
         </div>
 
@@ -231,7 +232,7 @@ export default function Dashboard() {
           {/* ── PROJECTS ────────────────────────────────── */}
           <div className="px-4 mb-2">
             <div className="flex items-center justify-between px-2 mb-2">
-              <span className="text-[11px] font-bold text-[#9CA3AF] uppercase tracking-widest">
+              <span className="text-[11px] font-bold text-[#9CA3AF] dark:text-muted-foreground uppercase tracking-widest">
                 Projects
               </span>
               <Dialog
@@ -245,7 +246,7 @@ export default function Dashboard() {
                 }}
               >
                 <DialogTrigger asChild>
-                  <button className="w-6 h-6 flex items-center justify-center rounded-md text-[#9CA3AF] hover:text-[#111111] hover:bg-[#F3F4F6] transition-colors">
+                  <button className="w-6 h-6 flex items-center justify-center rounded-md text-[#9CA3AF] dark:text-muted-foreground hover:text-[#111111] dark:hover:text-foreground hover:bg-[#F3F4F6] dark:hover:bg-accent transition-colors">
                     <Plus className="h-3.5 w-3.5" />
                   </button>
                 </DialogTrigger>
@@ -324,17 +325,20 @@ export default function Dashboard() {
                     className={cn(
                       'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 text-left',
                       isActive
-                        ? 'bg-[#111111] text-white shadow-sm'
-                        : 'text-[#555555] hover:bg-[#F3F4F6] hover:text-[#111111]'
+                        ? 'bg-[#111111] dark:bg-white text-white dark:text-[#111111] shadow-sm'
+                        : 'text-[#555555] dark:text-muted-foreground hover:bg-[#F3F4F6] dark:hover:bg-accent hover:text-[#111111] dark:hover:text-foreground'
                     )}
                   >
-                    <span
-                      className="w-2 h-2 rounded-full shrink-0 ring-2 ring-white/30"
-                      style={{ backgroundColor: project.color }}
+                    <ChevronRight
+                      className={cn(
+                        'w-3.5 h-3.5 shrink-0 transition-transform duration-200',
+                        isActive ? 'rotate-90' : 'opacity-40 group-hover:opacity-100'
+                      )}
+                      style={{ color: project.color }}
                     />
                     <span className="truncate flex-1">{project.name}</span>
                     {isActive && pendingCount > 0 && (
-                      <span className="text-[10px] font-bold min-w-[20px] h-5 px-1.5 rounded-full bg-white/20 text-white flex items-center justify-center">
+                      <span className="text-[10px] font-bold min-w-[20px] h-5 px-1.5 rounded-full bg-white/20 dark:bg-black/20 text-white dark:text-[#111111] flex items-center justify-center">
                         {pendingCount}
                       </span>
                     )}
@@ -346,7 +350,7 @@ export default function Dashboard() {
 
           {/* ── VIEWS ───────────────────────────────────── */}
           <div className="px-4 mt-5 pb-2">
-            <span className="text-[11px] font-bold text-[#9CA3AF] uppercase tracking-widest px-2 block mb-2">
+            <span className="text-[11px] font-bold text-[#9CA3AF] dark:text-muted-foreground uppercase tracking-widest px-2 block mb-2">
               Views
             </span>
             <div className="space-y-0.5">
@@ -362,25 +366,25 @@ export default function Dashboard() {
         </ScrollArea>
 
         {/* Sidebar footer — user account */}
-        <div className="border-t border-[#E5E7EB] p-4">
+        <div className="border-t border-[#E5E7EB] dark:border-border p-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-[#F3F4F6] transition-colors group">
+              <button className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-[#F3F4F6] dark:hover:bg-accent transition-colors group">
                 <Avatar className="h-8 w-8 rounded-full border border-[#E5E7EB] shrink-0">
                   <AvatarImage src={profile?.avatar_url} />
-                  <AvatarFallback className="rounded-full text-xs font-bold bg-[#111111] text-white">
+                  <AvatarFallback className="rounded-full text-xs font-bold bg-[#111111] dark:bg-white text-white dark:text-[#111111]">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="text-sm font-semibold text-[#111111] truncate leading-none mb-0.5">
+                  <p className="text-sm font-semibold text-[#111111] dark:text-foreground truncate leading-none mb-0.5">
                     {displayName}
                   </p>
-                  <p className="text-[11px] text-[#9CA3AF] truncate">
+                  <p className="text-[11px] text-[#9CA3AF] dark:text-muted-foreground truncate">
                     {user?.email}
                   </p>
                 </div>
-                <ChevronDown className="w-4 h-4 text-[#9CA3AF] group-hover:text-[#555555] transition-colors" />
+                <ChevronDown className="w-4 h-4 text-[#9CA3AF] dark:text-muted-foreground group-hover:text-[#555555] dark:group-hover:text-foreground transition-colors" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56" sideOffset={8}>
@@ -404,21 +408,21 @@ export default function Dashboard() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Header */}
-        <header className="flex h-16 items-center gap-4 px-6 border-b border-[#E5E7EB] bg-white shrink-0 z-10">
+        <header className="flex h-16 items-center gap-4 px-6 border-b border-[#E5E7EB] dark:border-[#1F1F1F] bg-white dark:bg-[#0D0D0D] shrink-0 z-10">
 
           {/* Project title + color dot */}
           <div className="flex items-center gap-3 min-w-0">
             {activeProject && (
-              <span
-                className="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-white"
-                style={{ backgroundColor: activeProject.color }}
+              <ChevronRight
+                className="w-4 h-4 shrink-0 opacity-50"
+                style={{ color: activeProject.color }}
               />
             )}
-            <h1 className="font-bold text-[17px] tracking-tight text-[#111111] truncate">
+            <h1 className="font-bold text-[17px] tracking-tight text-[#111111] dark:text-foreground truncate">
               {activeProject?.name ?? 'Select a Project'}
             </h1>
             {overdueTasks.length > 0 && (
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-100 shrink-0">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-500/10 text-red-500 border border-red-100 dark:border-red-500/20 shrink-0">
                 {overdueTasks.length} overdue
               </span>
             )}
@@ -427,7 +431,7 @@ export default function Dashboard() {
           <div className="flex-1" />
 
           {/* View tab switcher */}
-          <div className="flex items-center bg-[#F3F4F6] p-1 rounded-xl gap-0.5">
+          <div className="flex items-center bg-[#F3F4F6] dark:bg-secondary p-1 rounded-xl gap-0.5">
             {VIEW_TABS.map(tab => (
               <button
                 key={tab.id}
@@ -436,18 +440,15 @@ export default function Dashboard() {
                 className={cn(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150',
                   dashView === tab.id
-                    ? 'bg-white text-[#111111] shadow-sm border border-[#E5E7EB]'
-                    : 'text-[#888888] hover:text-[#555555]'
+                    ? 'bg-white dark:bg-accent text-[#111111] dark:text-foreground shadow-sm border border-[#E5E7EB] dark:border-border'
+                    : 'text-[#888888] dark:text-muted-foreground hover:text-[#555555] dark:hover:text-foreground'
                 )}
               >
                 <tab.icon className={cn(
                   'w-3.5 h-3.5',
-                  tab.id === 'ai' && dashView === tab.id && 'text-indigo-500'
+                  tab.id === 'ai' && dashView === tab.id && 'text-primary'
                 )} />
                 <span className="hidden sm:inline">{tab.label}</span>
-                {tab.id === 'ai' && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                )}
               </button>
             ))}
           </div>
@@ -457,11 +458,11 @@ export default function Dashboard() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#9CA3AF]" />
             <Input
               placeholder="Search tasks…"
-              className="pl-8 h-9 bg-[#F3F4F6] border-transparent text-sm placeholder:text-[#9CA3AF] focus-visible:bg-white focus-visible:border-[#E5E7EB] transition-all"
+              className="pl-8 h-9 bg-[#F3F4F6] dark:bg-secondary border-transparent dark:border-border text-sm placeholder:text-[#9CA3AF] dark:placeholder:text-muted-foreground focus-visible:bg-white dark:focus-visible:bg-accent focus-visible:border-[#E5E7EB] transition-all"
               onClick={() => setCommandPaletteOpen(true)}
               readOnly
             />
-            <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none inline-flex h-5 select-none items-center rounded border border-[#E5E7EB] bg-white px-1.5 font-mono text-[10px] text-[#9CA3AF]">
+            <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none inline-flex h-5 select-none items-center rounded border border-[#E5E7EB] dark:border-border bg-white dark:bg-card px-1.5 font-mono text-[10px] text-[#9CA3AF] dark:text-muted-foreground">
               ⌘K
             </kbd>
           </div>
@@ -471,8 +472,8 @@ export default function Dashboard() {
             className={cn(
               'flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full font-medium transition-colors shrink-0',
               wsConnected
-                ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                : 'bg-[#F3F4F6] text-[#9CA3AF] border border-[#E5E7EB]'
+                ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20'
+                : 'bg-[#F3F4F6] dark:bg-secondary text-[#9CA3AF] dark:text-muted-foreground border border-[#E5E7EB] dark:border-border'
             )}
             title={wsConnected ? 'Live sync active' : 'Connecting...'}
           >
@@ -486,14 +487,14 @@ export default function Dashboard() {
         </header>
 
         {/* ── Board area ─────────────────────────────────────── */}
-        <main className="flex-1 overflow-hidden relative bg-[#F7F8FA]">
+        <main className="flex-1 overflow-hidden relative bg-[#F7F8FA] dark:bg-[#0F0F0F]">
           {!activeProjectId ? (
             <div className="flex flex-col items-center justify-center h-full text-center px-4">
-              <div className="w-20 h-20 rounded-2xl bg-[#F3F4F6] border border-[#E5E7EB] flex items-center justify-center mb-5">
-                <FolderOpen className="w-10 h-10 text-[#D1D5DB]" />
+              <div className="w-20 h-20 rounded-2xl bg-[#F3F4F6] dark:bg-secondary border border-[#E5E7EB] dark:border-border flex items-center justify-center mb-5">
+                <FolderOpen className="w-10 h-10 text-[#D1D5DB] dark:text-muted-foreground" />
               </div>
-              <h3 className="text-xl font-bold text-[#111111] mb-2">No project selected</h3>
-              <p className="text-[#9CA3AF] max-w-sm text-sm leading-relaxed">
+              <h3 className="text-xl font-bold text-[#111111] dark:text-foreground mb-2">No project selected</h3>
+              <p className="text-[#9CA3AF] dark:text-muted-foreground max-w-sm text-sm leading-relaxed">
                 Choose a project from the sidebar to start managing your tasks.
               </p>
             </div>
@@ -526,12 +527,12 @@ export default function Dashboard() {
 
                     {/* AI tab header */}
                     <div className="flex items-center gap-3 mb-6">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-                        <Sparkles className="w-5 h-5 text-white" />
+                      <div className="flex items-center justify-center overflow-hidden">
+                        <EnergyCubeIcon size={32} className="text-primary" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-bold text-[#111111] leading-none">AI Features</h2>
-                        <p className="text-xs text-[#9CA3AF] mt-0.5">Powered by OpenRouter</p>
+                        <h2 className="text-lg font-bold text-[#111111] dark:text-foreground leading-none">AI Intelligence</h2>
+                        <p className="text-xs text-[#9CA3AF] dark:text-muted-foreground mt-0.5">Powered by OpenRouter</p>
                       </div>
                     </div>
 

@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+// jose removed — auth now uses supabase.auth.getUser() (official Supabase pattern)
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -423,30 +424,38 @@ serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    // Auth
+    // ── Auth: use official Supabase pattern — no JWT secret needed ────────────
+    // createClient with the user's Authorization header, then call getUser().
+    // Supabase verifies the token server-side via its Auth API.
+    // This is the canonical edge function auth pattern and never needs
+    // SUPABASE_JWT_SECRET or any manual jose verification.
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized', detail: 'Missing Authorization header' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
     const supabaseUrl = getEnv('SUPABASE_URL') ?? ''
     const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY') ?? ''
+
+    // Pass the user JWT as the Authorization header so all DB queries are RLS-scoped
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     })
 
-    const { data: authData, error: authError } = await supabase.auth.getUser()
-    const user = authData?.user
+    // Verify the token — getUser() calls the Supabase Auth API (always reliable)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user?.id) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      console.error('Auth error:', authError?.message)
+      return new Response(JSON.stringify({ error: 'Unauthorized', detail: authError?.message ?? 'Invalid session' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    const userId = user.id
 
     // Rate limiting
-    if (isRateLimited(user.id)) {
+    if (isRateLimited(userId)) {
       return new Response(JSON.stringify({ error: 'RATE_LIMITED', message: 'Too many requests. Please wait a minute.' }), {
         status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -497,7 +506,7 @@ serve(async (req: Request) => {
       body.activeProjectId ??
       ((body.context as { activeProjectId?: string | null } | undefined)?.activeProjectId ?? null)
 
-    const workspace = await buildWorkspaceContext(supabase, user.id, activeProjectId)
+    const workspace = await buildWorkspaceContext(supabase, userId, activeProjectId)
     const systemPrompt = buildChatSystemPrompt(workspace)
 
     return await streamChatResponse(apiKey, model, systemPrompt, messages)

@@ -61,8 +61,8 @@ export default function YearProgressBanner({ displayName }) {
         <div
             className={cn(
                 'relative mx-6 mt-6 mb-2 rounded-2xl border px-6 py-5 overflow-hidden transition-all duration-300',
-                /* Dark mode: deep navy card */
-                'dark:bg-[#0B1220] dark:border-white/6 dark:text-white',
+                /* Dark mode: pure-black card on near-black bg */
+                'dark:bg-[#080808] dark:border-[#242424] dark:text-foreground',
                 /* Light mode: white card */
                 'bg-white border-border text-[#111111]'
             )}

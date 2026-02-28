@@ -25,8 +25,9 @@ import {
 import {
   CheckCircle2, Clock, AlertCircle, TrendingUp, TrendingDown,
   Target, BarChart2, ArrowLeft, Zap, ListChecks,
-  Sparkles, Loader2, RefreshCw,
+  Loader2, RefreshCw,
 } from 'lucide-react'
+import EnergyCubeIcon from '../components/ui/EnergyCubeIcon'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/store'
 import { useShallow } from 'zustand/react/shallow'
@@ -289,8 +290,8 @@ function AIAnalysisCard({ result, isLoading, error, isEmpty, onGenerate }) {
     <div className="bg-card border border-border rounded-lg p-4 transition-colors duration-150 hover:border-primary/30">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-primary/10 rounded-md border border-primary/20 shrink-0">
-            <Sparkles className="w-4 h-4 text-primary" />
+          <div className="flex items-center justify-center shrink-0 overflow-hidden">
+            <EnergyCubeIcon size={24} className="text-primary" />
           </div>
           <div>
             <p className="text-xs font-semibold text-foreground">AI Analysis</p>
@@ -309,10 +310,10 @@ function AIAnalysisCard({ result, isLoading, error, isEmpty, onGenerate }) {
           )}
         >
           {isLoading
-            ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />Analyzing…</>
+            ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />Analyzing…</>
             : hasResult
               ? <><RefreshCw className="w-3.5 h-3.5 mr-1" />Refresh</>
-              : <><Sparkles className="w-3.5 h-3.5 mr-1" />Generate AI Analysis</>}
+              : <><EnergyCubeIcon size={18} className="mr-2" />Generate AI Analysis</>}
         </button>
       </div>
 
@@ -547,20 +548,25 @@ export default function Analytics() {
 
   const [chartsRef, chartsInView] = useInView(0.05)
 
-  // Build metrics payload for AI narration
-  const buildAIMetrics = () => ({
-    period: `Last ${timeRange}`,
-    previous_period: 'Previous period',
-    completion_rate_current: completionRate / 100,
-    completion_rate_previous: Math.max(0, (completionRate - 12) / 100),
-    tasks_completed_current: completedTasks,
-    tasks_completed_previous: Math.max(0, completedTasks - 4),
-    average_completion_time_current: 2.1,
-    average_completion_time_previous: 2.8,
-    overdue_count: overdueCount,
-    in_progress_count: inProgress,
-    total_tasks: totalTasks,
-  })
+  // Build metrics payload for AI narration — only real chart-derived data, no fabricated comparisons
+  const buildAIMetrics = () => {
+    // Summarise the last 7 activity buckets (most recent first)
+    const recentActivity = activityData.slice(-7).map(b => ({
+      label: b.label,
+      completed: b.completed,
+      added: b.added,
+    }))
+    return {
+      period: timeRange,
+      completion_rate: completionRate,
+      completed_count: completedTasks,
+      total_tasks: totalTasks,
+      in_progress_count: inProgress,
+      todo_count: todoCount,
+      overdue_count: overdueCount,
+      weekly_activity: recentActivity,
+    }
+  }
 
   /* ─── Loading ─── */
   if (loading) {

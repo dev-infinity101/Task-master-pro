@@ -14,12 +14,13 @@
  * - fake isAuthenticated boolean (replaced by real session)
  */
 
-import { useEffect, Component, lazy, Suspense } from 'react'
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useEffect, Component, lazy, Suspense, useState } from 'react'
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import useStore from './store/store'
 import { useShallow } from 'zustand/react/shallow'
 import { useAuth } from './hooks/useAuth'
+import { supabase } from './lib/supabase'
 
 // Auth
 import LandingPage from './pages/LandingPage'
@@ -39,6 +40,86 @@ const Settings = lazy(() => import('./pages/Settings'))
 import HourglassLoader from './components/ui/HourglassLoader'
 
 const PageLoader = () => <HourglassLoader />
+
+/**
+ * AuthCallback — handles Supabase PKCE email verification redirects.
+ *
+ * When a user clicks the confirmation link, Supabase redirects them to
+ * /auth/callback?code=<pkce_code>. The SDK's detectSessionInUrl=true
+ * intercepts this and exchanges the code for a session automatically.
+ * We just need to wait for onAuthStateChange to fire, then navigate.
+ *
+ * If the link is expired or invalid, we show a clear error and send
+ * the user back to /signup to try again.
+ */
+function AuthCallback() {
+  const navigate = useNavigate()
+  const [status, setStatus] = useState('verifying') // 'verifying' | 'error'
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      // If session wasn't established within 8 seconds, assume link is bad
+      setStatus('error')
+    }, 8000)
+
+    // Listen for auth state change — SIGNED_IN means exchange succeeded
+    const { data: { subscription } } = supabase
+      ? supabase.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_IN') {
+          clearTimeout(timeout)
+          navigate('/dashboard', { replace: true })
+        }
+        if (event === 'USER_UPDATED') {
+          clearTimeout(timeout)
+          navigate('/dashboard', { replace: true })
+        }
+      })
+      : { data: { subscription: { unsubscribe: () => { } } } }
+
+    return () => {
+      clearTimeout(timeout)
+      subscription.unsubscribe()
+    }
+  }, [navigate])
+
+  if (status === 'error') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F7F8FA] text-[#111111] text-center px-6">
+        <div className="max-w-sm">
+          <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-5">
+            <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold mb-2">Verification link expired</h2>
+          <p className="text-[#555555] text-sm mb-6 leading-relaxed">
+            This confirmation link has expired or is invalid.{' '}
+            Sign up again to receive a fresh link — it expires after 24 hours.
+          </p>
+          <a
+            href="/signup"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#111111] text-white text-sm font-semibold rounded-xl hover:bg-[#2563EB] transition-colors"
+          >
+            Back to Sign Up
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA]">
+      <div className="text-center">
+        <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-4 animate-pulse">
+          <svg className="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <p className="text-sm text-[#555555]">Verifying your email…</p>
+      </div>
+    </div>
+  )
+}
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -124,7 +205,7 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/auth/callback" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
 
           {/* Protected routes */}
           <Route
