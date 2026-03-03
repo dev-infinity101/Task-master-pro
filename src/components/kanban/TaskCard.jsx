@@ -4,7 +4,6 @@ import {
   Calendar,
   CheckSquare,
   Flag,
-  MoreVertical,
   Trash2,
 } from 'lucide-react'
 import useStore from '../../store/store'
@@ -22,9 +21,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 
@@ -210,71 +206,17 @@ export default function TaskCard({ task, isDragging = false }) {
               </h4>
             </div>
 
-            {/* ⋮ Context menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 -mr-1 -mt-1 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                  onPointerDown={(e) => e.stopPropagation()}
-                >
-                  <MoreVertical className="w-3.5 h-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-44"
-                onPointerDown={(e) => e.stopPropagation()}
-              >
-                {/* Priority submenu inside ⋮ menu */}
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="gap-2">
-                    <Flag className={cn("w-3.5 h-3.5", currentPriorityKey !== 'none' ? priority.color : 'text-muted-foreground')} />
-                    <span>Set Priority</span>
-                    {currentPriorityKey !== 'none' && (
-                      <span className={cn("ml-auto text-[10px] font-medium", priority.color)}>
-                        {priority.label}
-                      </span>
-                    )}
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="w-36">
-                    <DropdownMenuRadioGroup
-                      value={currentPriorityKey}
-                      onValueChange={(value) =>
-                        updateTask(task.id, task.project_id ?? activeProjectId, { priority: value })
-                      }
-                    >
-                      {PRIORITY_OPTIONS.map((key) => {
-                        const c = PRIORITY_CONFIG[key]
-                        return (
-                          <DropdownMenuRadioItem
-                            key={key}
-                            value={key}
-                            className="gap-2 cursor-pointer"
-                          >
-                            <span className={cn('w-2 h-2 rounded-full shrink-0', c.dot)} />
-                            <span className={cn('text-xs font-medium', key !== 'none' && c.color)}>
-                              {c.label}
-                            </span>
-                          </DropdownMenuRadioItem>
-                        )
-                      })}
-                    </DropdownMenuRadioGroup>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuItem
-                  onClick={handleDelete}
-                  className="text-destructive focus:text-destructive gap-2"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Delete button (visible on hover) */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 -mr-1 -mt-1 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 hover:text-destructive hover:bg-destructive/10"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={handleDelete}
+              title="Delete task"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
           </div>
 
           {/* ── Footer: metadata + priority flag button ── */}
