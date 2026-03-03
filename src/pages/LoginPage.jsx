@@ -211,7 +211,7 @@ export default function LoginPage() {
 
             <div className="w-full">
               <div className="mb-8 text-center flex flex-col items-center">
-                <span className='text-[12px] font-mono text-white/40 leading-relaxed uppercase tracking-widest'>Welcom to productivity</span>
+                <span className='text-[12px] font-mono text-white/40 leading-relaxed uppercase tracking-widest'>Welcome to productivity</span>
                 <h2 className="text-[28px] md:text-[32px] font-black tracking-tighter text-white mix-blend-plus-lighter leading-tight uppercase">
                   {mode === 'login'
                     ? 'SIGN_IN'
