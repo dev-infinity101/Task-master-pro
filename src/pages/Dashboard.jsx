@@ -13,6 +13,7 @@ import {
   Loader2,
   BarChart2,
   ChevronRight,
+  Map,
 } from 'lucide-react'
 import EnergyCubeIcon from '../components/ui/EnergyCubeIcon'
 import { useNavigate } from 'react-router-dom'
@@ -359,6 +360,12 @@ export default function Dashboard() {
                 label="Analytics"
                 active={false}
                 onClick={() => navigate('/analytics')}
+              />
+              <NavItem
+                icon={Map}
+                label="Year Roadmap"
+                active={false}
+                onClick={() => navigate('/roadmap')}
               />
             </div>
           </div>

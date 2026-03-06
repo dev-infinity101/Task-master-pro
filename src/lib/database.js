@@ -278,6 +278,10 @@ export async function createTask(userId, projectId, columnId, taskData) {
 
   const position = (lastTask?.[0]?.position ?? 0) + 1000
 
+  // Auto-set deadline to 24h from now if not provided
+  const deadline = taskData.deadline ?? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  const deadline_type = taskData.deadline ? 'manual' : 'auto'
+
   return supabase
     .from('tasks')
     .insert({
@@ -287,6 +291,8 @@ export async function createTask(userId, projectId, columnId, taskData) {
       position,
       priority: 'none',
       ...taskData,
+      deadline,
+      deadline_type,
     })
     .select()
     .single()
@@ -440,4 +446,60 @@ export async function updateAIConversation(conversationId, messages) {
 
 export async function deleteAIConversation(conversationId) {
   return supabase.from('ai_conversations').delete().eq('id', conversationId)
+}
+
+// ─────────────────────────────────────────────
+// ROADMAP MONTHS
+// ─────────────────────────────────────────────
+
+/**
+ * Fetch all roadmap months for a given project + year.
+ * Returns all 12 rows (some may be null / not yet created).
+ */
+export async function getRoadmapMonths(userId, projectId, year) {
+  return supabase
+    .from('roadmap_months')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('project_id', projectId)
+    .eq('year', year)
+    .order('month', { ascending: true })
+}
+
+/**
+ * Upsert a roadmap month row.
+ * Creates a new row if (user_id, project_id, year, month) doesn't exist;
+ * updates it if it does.
+ */
+export async function upsertRoadmapMonth(userId, projectId, year, month, updates) {
+  return supabase
+    .from('roadmap_months')
+    .upsert(
+      {
+        user_id: userId,
+        project_id: projectId,
+        year,
+        month,
+        ...updates,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,project_id,year,month' }
+    )
+    .select()
+    .single()
+}
+
+/**
+ * Get tasks linked to a roadmap month (those whose deadline falls in that calendar month).
+ */
+export async function getTasksForRoadmapMonth(userId, year, month) {
+  const start = new Date(year, month - 1, 1).toISOString()
+  const end = new Date(year, month, 0, 23, 59, 59).toISOString()
+  return supabase
+    .from('tasks')
+    .select('id, title, status, priority, deadline, overdue, project_id')
+    .eq('user_id', userId)
+    .gte('deadline', start)
+    .lte('deadline', end)
+    .order('deadline', { ascending: true })
 }

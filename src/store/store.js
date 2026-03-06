@@ -261,7 +261,7 @@ const useStore = create(
         try { return localStorage.getItem('tm-theme') || 'light' } catch { return 'light' }
       })(),
       sidebarOpen: true,
-      activeView: 'kanban',      // 'kanban' | 'list' | 'analytics'
+      activeView: 'kanban',      // 'kanban' | 'list' | 'analytics' | 'roadmap'
       commandPaletteOpen: false,
       aiPanelOpen: false,
       wsConnected: false,
@@ -295,6 +295,26 @@ const useStore = create(
       setWsConnected: (connected) =>
         set((state) => {
           state.wsConnected = connected
+        }),
+
+      // ─────────────────────────────────────────
+      // DEADLINE MODAL SLICE
+      // ─────────────────────────────────────────
+      deadlineModal: {
+        open: false,
+        taskId: null,
+        projectId: null,
+        currentDeadline: null,
+      },
+
+      openDeadlineModal: ({ taskId, projectId, currentDeadline }) =>
+        set((state) => {
+          state.deadlineModal = { open: true, taskId, projectId, currentDeadline }
+        }),
+
+      closeDeadlineModal: () =>
+        set((state) => {
+          state.deadlineModal = { open: false, taskId: null, projectId: null, currentDeadline: null }
         }),
 
       // ─────────────────────────────────────────

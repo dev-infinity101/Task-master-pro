@@ -45,6 +45,7 @@ export function useTasks() {
 
       // Create optimistic task with temp UUID
       const tempId = `temp_${uuidv4()}`
+      const autoDeadline = taskData.deadline ?? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       const optimisticTask = {
         id: tempId,
         user_id: userId,
@@ -57,6 +58,10 @@ export function useTasks() {
         status: taskData.status ?? 'todo',
         position: Date.now(), // temp position
         due_date: taskData.due_date ?? null,
+        deadline: autoDeadline,
+        deadline_type: taskData.deadline ? 'manual' : 'auto',
+        overdue: false,
+        overdue_since: null,
         tags: taskData.tags ?? [],
         estimated_mins: taskData.estimated_mins ?? null,
         created_at: new Date().toISOString(),

@@ -31,13 +31,16 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 // Global UI
 import CommandPalette from './components/ui/CommandPalette'
 import AIAssistant from './components/ai/AIAssistant'
+import DeadlineModal from './components/ui/DeadlineModal'
 
 // Pages (lazy-loaded for code splitting)
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Analytics = lazy(() => import('./pages/Analytics'))
 const Settings = lazy(() => import('./pages/Settings'))
+const Roadmap = lazy(() => import('./pages/Roadmap'))
 
 import HourglassLoader from './components/ui/HourglassLoader'
+import { useDeadlineScheduler } from './hooks/useDeadlineScheduler'
 
 const PageLoader = () => <HourglassLoader />
 
@@ -159,13 +162,16 @@ class ErrorBoundary extends Component {
 }
 
 export default function App() {
-  const { theme, setTheme } = useStore(useShallow((s) => ({
+  const { theme, setTheme, session } = useStore(useShallow((s) => ({
     theme: s.theme,
     setTheme: s.setTheme,
+    session: s.session,
   })))
   const location = useLocation()
   const isLanding = location.pathname === '/'
   useAuth() // Initializes session and subscribes to auth changes
+  // Activate deadline scheduler only for authenticated users
+  useDeadlineScheduler()
 
   // System theme detection
   useEffect(() => {
@@ -238,6 +244,16 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/roadmap"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<PageLoader />}>
+                  <Roadmap />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
 
           {/* Default redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -246,6 +262,7 @@ export default function App() {
         {/* Global overlays */}
         <CommandPalette />
         <AIAssistant />
+        <DeadlineModal />
 
         {/* Toast notifications */}
         <Toaster

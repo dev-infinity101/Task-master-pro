@@ -19,6 +19,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { cn } from "@/lib/utils"
+import DeadlinePopover from '../ui/DeadlinePopover'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -220,6 +221,14 @@ function TaskRow({ task, level = 0, index }) {
           </DropdownMenu>
         </div>
 
+        {/* Deadline picker */}
+        <div className="w-28 hidden lg:flex items-center">
+          <DeadlinePopover
+            task={task}
+            projectId={task.project_id}
+          />
+        </div>
+
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {level < 3 && (
@@ -338,10 +347,11 @@ export default function TaskListView() {
   return (
     <div className="h-full flex flex-col bg-background text-foreground animate-in fade-in duration-300">
       {/* List Header */}
-      <div className="grid grid-cols-[1fr_128px_96px_40px] gap-4 px-6 py-3 text-xs font-medium text-muted-foreground border-b border-border bg-muted/20 backdrop-blur-sm sticky top-0 z-10">
+      <div className="grid grid-cols-[1fr_128px_96px_112px_40px] gap-4 px-6 py-3 text-xs font-medium text-muted-foreground border-b border-border bg-muted/20 backdrop-blur-sm sticky top-0 z-10">
         <div className="pl-10">Task</div>
         <div className="hidden sm:block">Status</div>
         <div className="hidden md:block">Priority</div>
+        <div className="hidden lg:block">Deadline</div>
         <div></div>
       </div>
 
