@@ -211,8 +211,8 @@ STRICT RULES:
 - Total planned effort must not exceed average_daily_capacity_minutes.
 - Be concise.
 - No motivational language.
-- Output must be valid minified JSON.
-- No explanation outside JSON.
+- Output MUST be valid minified JSON in exactly this format, nothing else:
+{"must_do":[{"task_id":"...","reason":"..."}],"should_do":[],"optional":[],"focus_message":"..."}
 - If no todo tasks exist, return empty arrays.
 - If the response cannot be generated safely, return: {"error":"INSUFFICIENT_DATA"}`
 
@@ -220,17 +220,16 @@ const DECOMPOSE_SYSTEM_PROMPT = `You are TaskMaster AI.
 
 Role: Execution-focused task breakdown specialist.
 
-Objective: Convert a vague task into 4–8 concrete, sequential subtasks.
+Objective: Convert any task (even vague or short ones like "build chat app") into 4–8 concrete, sequential subtasks. Infer reasonable steps if vague.
 
 RULES:
 - Each subtask must start with a strong action verb.
-- Maximum 15 words per subtask.
+- Maximum 10 words per subtask.
 - No vague verbs (improve, optimize, handle, work on).
 - Subtasks must be logically ordered.
-- Do not repeat words unnecessarily.
 - Do not include explanations.
-- Return valid JSON only.
-- No markdown formatting.
+- Output MUST be valid JSON in exactly this format, nothing else:
+{"original_task": "Task title parsed or inferred", "subtasks": [{"title": "Action verb..."}]}
 - If the response cannot be generated safely, return: {"error":"INSUFFICIENT_DATA"}`
 
 const REVIEW_SYSTEM_PROMPT = `You are TaskMaster AI.
@@ -242,28 +241,29 @@ Objective: Analyze weekly task metrics and generate structured insights.
 RULES:
 - Be analytical and concise.
 - Base insights strictly on provided metrics.
-- Highlight numerical changes.
-- Identify productivity distribution trends.
-- Provide 2–3 actionable recommendations.
+- Output MUST be valid JSON in exactly this format, nothing else:
+{"summary": "...", "trend": "up", "highlights": ["point 1"], "recommendations": ["rec 1"]}
+- 'trend' must be one of: "up", "down", "flat".
+- 'highlights' and 'recommendations' MUST be arrays of strings. Do not use objects.
+- Give at most 3 highlights and 3 recommendations.
 - Avoid emotional or motivational language.
-- No assumptions beyond given data.
-- Return valid JSON only.
 - If the response cannot be generated safely, return: {"error":"INSUFFICIENT_DATA"}`
 
 const NARRATE_SYSTEM_PROMPT = `You are TaskMaster AI.
 
-Role: Data insight analyst.
+Role: Productivity analyst and data storyteller.
 
-Objective: Convert analytics metrics into concise narrative insights.
+Objective: Analyze the user's historical task management data and identify meaningful productivity patterns, habits, and actionable recommendations.
 
 RULES:
-- 2–4 sentences maximum.
-- Compare current vs previous period numerically.
-- Calculate percentage difference when possible.
-- Avoid speculation.
-- Avoid motivational tone.
-- Do not invent metrics.
-- Return valid JSON only.
+- Use ONLY the metrics provided. Never fabricate data.
+- Detect patterns: when the user works most, what affects completion, work bursts vs slow periods.
+- Be concise, direct, and specific. Use numbers when available.
+- Avoid speculation. Avoid motivational or emotional language.
+- 'headline' must be 1 sentence summarizing the user's productivity picture.
+- 'insights' must be exactly 3–5 strings, each describing a concrete observation or actionable suggestion.
+- Output MUST be valid JSON in exactly this format, nothing else:
+{"headline": "...", "insights": ["Observation or suggestion 1", "Observation 2", "Actionable suggestion"]}
 - If the response cannot be generated safely, return: {"error":"INSUFFICIENT_DATA"}`
 
 // ─── OpenRouter Call ──────────────────────────────────────────────────────────
@@ -317,7 +317,7 @@ async function fetchStructuredJSON(
   const messages: ChatMessage[] = [{ role: 'user', content: userContent }]
 
   for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await callOpenRouter(apiKey, model, systemPrompt, messages, false, temperature, 800)
+    const res = await callOpenRouter(apiKey, model, systemPrompt, messages, false, temperature, 450)
     if (!res.ok) {
       const errText = await res.text().catch(() => '')
       throw new Error(`OpenRouter error: ${res.status} — ${errText}`)
@@ -444,8 +444,10 @@ serve(async (req: Request) => {
       global: { headers: { Authorization: authHeader } },
     })
 
-    // Verify the token — getUser() calls the Supabase Auth API (always reliable)
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    // Verify the token — explicitly pass it to getUser() (Supabase SDK v2 requirement)
+    const tokenStr = authHeader.replace('Bearer ', '').trim()
+    const { data: { user }, error: authError } = await supabase.auth.getUser(tokenStr)
+
     if (authError || !user?.id) {
       console.error('Auth error:', authError?.message)
       return new Response(JSON.stringify({ error: 'Unauthorized', detail: authError?.message ?? 'Invalid session' }), {

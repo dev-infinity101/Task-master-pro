@@ -6,10 +6,10 @@
  * 1. DO NOT fight the SDK's own token refresh.
  *    Supabase JS v2 has an internal `onAuthStateChange` listener that
  *    automatically sets the new access_token on the Realtime client when
- *    TOKEN_REFRESHED fires. Our hook just subscribes channels — the SDK
+ *    TOKEN_REFRESHED fires. Our hook just subscribes channels  -  the SDK
  *    handles re-auth of existing channels automatically.
  *
- * 2. Stable channel names — never include Date.now() or random suffixes.
+ * 2. Stable channel names  -  never include Date.now() or random suffixes.
  *    A stable name lets the SDK reuse the WebSocket transport instead of
  *    opening a new one every retry.
  *
@@ -21,7 +21,7 @@
  *    Exponential back-off: 2s, 4s, 8s (3 attempts max).
  *
  * 5. Don't flash "Connecting" when switching projects.
- *    Old channel is removed, new one subscribes — wsConnected stays true
+ *    Old channel is removed, new one subscribes  -  wsConnected stays true
  *    until CLOSED/ERROR actually arrives on the new channel.
  */
 
@@ -52,7 +52,7 @@ export function useRealtimeSync(projectId) {
     removeProject,
   } = useStore()
 
-  // ── handlers (stable) ────────────────────────────────────────────────────
+  //  handlers (stable) 
 
   const handleTaskChange = useCallback((payload) => {
     const { eventType, new: n, old: o } = payload
@@ -77,7 +77,7 @@ export function useRealtimeSync(projectId) {
     if (eventType === 'DELETE') removeProject(o.id)
   }, [addProject, updateProject, removeProject])
 
-  // ── Projects channel ──────────────────────────────────────────────────────
+  //  Projects channel 
 
   useEffect(() => {
     if (!user?.id || !supabase) return
@@ -103,7 +103,7 @@ export function useRealtimeSync(projectId) {
     }
   }, [user?.id, handleProjectChange])
 
-  // ── Tasks + Columns channel ───────────────────────────────────────────────
+  //  Tasks + Columns channel 
 
   useEffect(() => {
     if (!projectId || !supabase) return
@@ -149,7 +149,7 @@ export function useRealtimeSync(projectId) {
             if (n < 3) {
               retryRef.current.count++
               const delay = Math.pow(2, n) * 2000       // 2s, 4s, 8s
-              if (import.meta.env.DEV) console.warn(`[Realtime] TIMED_OUT — retry in ${delay}ms`)
+              if (import.meta.env.DEV) console.warn(`[Realtime] TIMED_OUT  -  retry in ${delay}ms`)
               retryRef.current.timer = setTimeout(() => {
                 if (channelRef.current) {
                   supabase.removeChannel(channelRef.current)
@@ -162,10 +162,10 @@ export function useRealtimeSync(projectId) {
           }
 
           if (status === 'CHANNEL_ERROR') {
-            // Auth / RLS error — DO NOT retry (would spam 401s).
+            // Auth / RLS error  -  DO NOT retry (would spam 401s).
             // The SDK's own listener will re-auth channels when token refreshes.
             setWsConnected(false)
-            if (import.meta.env.DEV) console.error('[Realtime] CHANNEL_ERROR — waiting for SDK re-auth')
+            if (import.meta.env.DEV) console.error('[Realtime] CHANNEL_ERROR  -  waiting for SDK re-auth')
             return
           }
 

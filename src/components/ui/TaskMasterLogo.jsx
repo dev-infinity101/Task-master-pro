@@ -1,9 +1,9 @@
 /**
- * TaskMasterLogo — Single-source-of-truth brand logo component.
+ * TaskMasterLogo  -  Single-source-of-truth brand logo component.
  *
  * Architecture:
  *  - Single SVG, CSS-variable driven via --logo-bg / --logo-border / --logo-icon
- *  - Adapts automatically to .dark class (Option A — CSS variable based)
+ *  - Adapts automatically to .dark class (Option A  -  CSS variable based)
  *  - No raster images; pure vector paths
  *  - Pixel-sharp at 16px → 512px
  *  - Accessible: <title> + aria-label
@@ -15,10 +15,10 @@
  *   <TaskMasterLogo size={40} variant="auth" />     // auth screen variant
  *
  * Variants:
- *   "default"  — icon + optional wordmark side by side
- *   "icon"     — icon only, no text
- *   "auth"     — icon + stacked "TaskMaster" + "Pro" label
- *   "sidebar"  — compact icon + tight wordmark
+ *   "default"   -  icon + optional wordmark side by side
+ *   "icon"      -  icon only, no text
+ *   "auth"      -  icon + stacked "TaskMaster" + "Pro" label
+ *   "sidebar"   -  compact icon + tight wordmark
  */
 
 const LOGO_ID_COUNTER = { current: 0 }
@@ -46,7 +46,7 @@ export default function TaskMasterLogo({
             style={style}
             aria-label="TaskMaster Pro Logo"
         >
-            {/* ── SVG Icon ───────────────────────────────────── */}
+            {/*  SVG Icon  */}
             <svg
                 width={size}
                 height={size}
@@ -62,7 +62,7 @@ export default function TaskMasterLogo({
             >
                 <title id={titleId}>TaskMaster Pro Logo</title>
 
-                {/* ── Outer rounded-square container ── */}
+                {/*  Outer rounded-square container  */}
                 <rect
                     x="2"
                     y="2"
@@ -75,7 +75,7 @@ export default function TaskMasterLogo({
                     strokeWidth="3"
                 />
 
-                {/* ── Hourglass icon ──────────────────────────────
+                {/*  Hourglass icon 
             The hourglass is built from 4 key shapes:
             1. Top trapezoid (top half, wide at top)
             2. Bottom trapezoid (bottom half, wide at bottom)
@@ -83,7 +83,7 @@ export default function TaskMasterLogo({
             4. Bottom flat bar (cap)
             5. A thin waist connector
             All centered at 32,32 within the 64×64 viewBox.
-        ────────────────────────────────────────────────── */}
+         */}
 
                 {/* Top cap bar */}
                 <rect
@@ -105,21 +105,21 @@ export default function TaskMasterLogo({
                     fill="var(--logo-icon)"
                 />
 
-                {/* Top hourglass half — trapezoid pointing down */}
+                {/* Top hourglass half  -  trapezoid pointing down */}
                 <path
                     d="M16 17 L48 17 L35 32 L29 32 Z"
                     fill="var(--logo-icon)"
                     opacity="0.95"
                 />
 
-                {/* Bottom hourglass half — trapezoid pointing up */}
+                {/* Bottom hourglass half  -  trapezoid pointing up */}
                 <path
                     d="M29 32 L35 32 L48 47 L16 47 Z"
                     fill="var(--logo-icon)"
                     opacity="0.95"
                 />
 
-                {/* Waist — tiny circle dot at the neck */}
+                {/* Waist  -  tiny circle dot at the neck */}
                 <circle
                     cx="32"
                     cy="32"
@@ -128,7 +128,7 @@ export default function TaskMasterLogo({
                     opacity="0.7"
                 />
 
-                {/* Sand particle animation — flows from narrow waist downward */}
+                {/* Sand particle animation  -  flows from narrow waist downward */}
                 <rect
                     x="30.5"
                     y="32"
@@ -149,7 +149,7 @@ export default function TaskMasterLogo({
                 </rect>
             </svg>
 
-            {/* ── Wordmark ───────────────────────────────────── */}
+            {/*  Wordmark  */}
             {withText && !iconOnly && (
                 <span
                     className="tm-logo-wordmark leading-none select-none"

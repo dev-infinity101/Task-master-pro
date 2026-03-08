@@ -2,7 +2,7 @@
  * DeadlineModal.jsx
  *
  * Centered full-screen modal for picking a task deadline.
- * Rendered once in App.jsx root — never inside Kanban columns,
+ * Rendered once in App.jsx root  -  never inside Kanban columns,
  * so z-index and overflow:hidden clipping are non-issues.
  *
  * State flow:
@@ -28,7 +28,7 @@ import useStore from '../../store/store'
 import { useShallow } from 'zustand/react/shallow'
 import { useTasks } from '../../hooks/useTasks'
 
-/* ─── Calendar classNames for react-day-picker v9 ────────────── */
+/*  Calendar classNames for react-day-picker v9  */
 const DAY_PICKER_CLASSES = {
     root: 'w-full',
     months: 'flex flex-col',
@@ -73,7 +73,7 @@ function buildISO(date, h, m, ap) {
     return setMinutes(setHours(date, hours24), m).toISOString()
 }
 
-/* ─── DeadlineModal ──────────────────────────────────────────── */
+/*  DeadlineModal  */
 export default function DeadlineModal() {
     const { deadlineModal, closeDeadlineModal } = useStore(
         useShallow((s) => ({

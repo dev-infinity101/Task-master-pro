@@ -1,5 +1,5 @@
 /**
- * useRoadmap.js — Fetches and manages roadmap_months data
+ * useRoadmap.js  -  Fetches and manages roadmap_months data
  *
  * Fetches all 12 months for the active project in one query.
  * Creates rows on-demand when user edits a month.

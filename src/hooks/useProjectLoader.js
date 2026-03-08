@@ -3,7 +3,7 @@
  *
  * Shared hook that loads projects, columns, and tasks into the Zustand store.
  * Call this from any page that needs project data (Dashboard, Analytics).
- * It's safe to call from multiple places — the store deduplicates state.
+ * It's safe to call from multiple places  -  the store deduplicates state.
  */
 
 import { useEffect, useState } from 'react'

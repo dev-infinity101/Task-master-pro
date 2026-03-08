@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
 
 /**
- * HourglassLoader — A premium, tech-focused animated loader.
+ * HourglassLoader  -  A premium, tech-focused animated loader.
  * Designed to be used globally across the app for a consistent look.
  */
 export default function HourglassLoader({ className, fullScreen = true }) {
@@ -31,7 +31,7 @@ export default function HourglassLoader({ className, fullScreen = true }) {
                         fill="hsl(var(--muted))"
                         opacity="0.35"
                     />
-                    {/* top sand — drains */}
+                    {/* top sand  -  drains */}
                     <clipPath id="topSandGlobal">
                         <rect x="12" y="6" width="28" height="16">
                             <animate
@@ -50,7 +50,7 @@ export default function HourglassLoader({ className, fullScreen = true }) {
                         clipPath="url(#topSandGlobal)"
                         opacity="0.8"
                     />
-                    {/* bottom sand — fills */}
+                    {/* bottom sand  -  fills */}
                     <clipPath id="botSandGlobal">
                         <rect x="12" y="30" width="28" height="0">
                             <animate

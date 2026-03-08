@@ -1,5 +1,5 @@
 /**
- * App.jsx — Root component
+ * App.jsx  -  Root component
  *
  * Responsibilities:
  * 1. Auth initialization (session check on mount)
@@ -45,7 +45,7 @@ import { useDeadlineScheduler } from './hooks/useDeadlineScheduler'
 const PageLoader = () => <HourglassLoader />
 
 /**
- * AuthCallback — handles Supabase PKCE email verification redirects.
+ * AuthCallback  -  handles Supabase PKCE email verification redirects.
  *
  * When a user clicks the confirmation link, Supabase redirects them to
  * /auth/callback?code=<pkce_code>. The SDK's detectSessionInUrl=true
@@ -65,7 +65,7 @@ function AuthCallback() {
       setStatus('error')
     }, 8000)
 
-    // Listen for auth state change — SIGNED_IN means exchange succeeded
+    // Listen for auth state change  -  SIGNED_IN means exchange succeeded
     const { data: { subscription } } = supabase
       ? supabase.auth.onAuthStateChange((event) => {
         if (event === 'SIGNED_IN') {
@@ -97,7 +97,7 @@ function AuthCallback() {
           <h2 className="text-xl font-bold mb-2">Verification link expired</h2>
           <p className="text-[#555555] text-sm mb-6 leading-relaxed">
             This confirmation link has expired or is invalid.{' '}
-            Sign up again to receive a fresh link — it expires after 24 hours.
+            Sign up again to receive a fresh link  -  it expires after 24 hours.
           </p>
           <a
             href="/signup"

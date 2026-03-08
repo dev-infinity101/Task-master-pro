@@ -1,5 +1,5 @@
 /**
- * AIFeaturesPanel.jsx — Full-featured AI panel with all 4 AI modes
+ * AIFeaturesPanel.jsx  -  Full-featured AI panel with all 4 AI modes
  *
  * Features:
  *  - Daily Auto-Planning   (mode: plan)
@@ -21,8 +21,10 @@ import {
     Loader2, RefreshCw, AlertCircle, ChevronRight,
     CheckCircle2, Clock, AlertTriangle, X,
     TrendingUp, TrendingDown, ArrowRight, Zap,
-    BookOpen, ClipboardList,
+    BookOpen, ClipboardList, Plus,
 } from 'lucide-react'
+import { toast } from 'sonner'
+import { useTasks } from '../../hooks/useTasks'
 import EnergyCubeIcon from '../ui/EnergyCubeIcon'
 import { useAIFeatures } from '../../hooks/useAIFeatures'
 import useStore from '../../store/store'
@@ -30,31 +32,82 @@ import { useShallow } from 'zustand/react/shallow'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+//  Helpers 
 
-function buildPlanPayload(tasks, activeProjectId) {
-    const projectTasks = (tasks[activeProjectId] ?? [])
-    const todoTasks = projectTasks
-        .filter(t => t.status === 'todo' && (t.parent_task_id === null || t.parent_task_id === undefined))
-        .map(t => ({
-            id: t.id,
-            title: t.title,
-            priority: t.priority ?? 'none',
-            due_date: t.due_date ?? null,
-            status: t.status,
-            estimated_minutes: null,
-        }))
-    const completedLast7 = projectTasks.filter(t => {
-        if (t.status !== 'done' || !t.completed_at) return false
-        const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-        return new Date(t.completed_at) >= cutoff
-    }).length
-    return {
-        date: new Date().toISOString().split('T')[0],
-        tasks: todoTasks,
-        completed_last_7_days: completedLast7,
-        average_daily_capacity_minutes: 300,
+//  Deterministic Daily Plan (no LLM  -  runs instantly on frontend) 
+
+const PRIORITY_WEIGHTS = { urgent: 4, high: 3, medium: 2, low: 1, none: 0 }
+
+function deadlineProximityWeight(dueDate) {
+    if (!dueDate) return 0
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    const due = new Date(dueDate)
+    due.setHours(0, 0, 0, 0)
+    const daysUntil = Math.round((due - now) / (1000 * 60 * 60 * 24))
+    if (daysUntil <= 0) return 4   // overdue / today
+    if (daysUntil <= 1) return 3   // tomorrow
+    if (daysUntil <= 3) return 2   // within 3 days
+    if (daysUntil <= 7) return 1   // within a week
+    return 0
+}
+
+function getPlanLabel(dueDate) {
+    if (!dueDate) return null
+    const now = new Date(); now.setHours(0, 0, 0, 0)
+    const due = new Date(dueDate); due.setHours(0, 0, 0, 0)
+    const days = Math.round((due - now) / 86400000)
+    if (days < 0) return `${Math.abs(days)}d overdue`
+    if (days === 0) return 'Due today'
+    if (days === 1) return 'Due tomorrow'
+    return `Due in ${days}d`
+}
+
+function generateDailyPlan(tasks, activeProjectId) {
+    const activeTasks = (tasks[activeProjectId] ?? [])
+        .filter(t => (t.status === 'todo' || t.status === 'in_progress')
+            && (t.parent_task_id === null || t.parent_task_id === undefined))
+
+    if (activeTasks.length === 0) {
+        return { must_do: [], should_do: [], optional: [], focus_message: null }
     }
+
+    // Score each task
+    const scored = activeTasks.map(t => {
+        const pw = PRIORITY_WEIGHTS[t.priority ?? 'none']
+        const dw = deadlineProximityWeight(t.due_date)
+        const score = pw + dw
+        return { ...t, score }
+    }).sort((a, b) => b.score - a.score)
+
+    const toItem = t => ({
+        title: t.title,
+        reason: getPlanLabel(t.due_date),
+        priority: t.priority ?? 'none',
+    })
+
+    // must_do: score >= 5 OR (score > 0 AND in_progress)
+    const mustRaw = scored.filter(t => t.score >= 5 || (t.status === 'in_progress' && t.score > 0))
+    const must_do = mustRaw.slice(0, 3).map(toItem)
+    const mustIds = new Set(mustRaw.slice(0, 3).map(t => t.id))
+
+    // should_do: score 2-4
+    const shouldRaw = scored.filter(t => !mustIds.has(t.id) && t.score >= 2)
+    const should_do = shouldRaw.slice(0, 4).map(toItem)
+    const shouldIds = new Set(shouldRaw.slice(0, 4).map(t => t.id))
+
+    // optional: everything else (score 0-1)
+    const optional = scored
+        .filter(t => !mustIds.has(t.id) && !shouldIds.has(t.id))
+        .slice(0, 4)
+        .map(toItem)
+
+    const total = activeTasks.length
+    const focus_message = must_do.length > 0
+        ? `Focus on ${must_do.length} critical task${must_do.length > 1 ? 's' : ''} first  -  ${total} task${total !== 1 ? 's' : ''} remaining.`
+        : `${total} task${total !== 1 ? 's' : ''} in your backlog. Start with the top Should Do item.`
+
+    return { must_do, should_do, optional, focus_message }
 }
 
 function buildWeeklyReviewPayload(tasks, activeProjectId) {
@@ -102,7 +155,7 @@ function buildWeeklyReviewPayload(tasks, activeProjectId) {
     }
 }
 
-// ── Skeleton Loader ───────────────────────────────────────────────────────────
+//  Skeleton Loader 
 
 function Skeleton({ className }) {
     return (
@@ -110,7 +163,7 @@ function Skeleton({ className }) {
     )
 }
 
-// ── Error State ───────────────────────────────────────────────────────────────
+//  Error State 
 
 function ErrorState({ message, onRetry }) {
     return (
@@ -134,7 +187,7 @@ function ErrorState({ message, onRetry }) {
     )
 }
 
-// ── Empty State ───────────────────────────────────────────────────────────────
+//  Empty State 
 
 function EmptyState({ message }) {
     return (
@@ -149,7 +202,7 @@ function EmptyState({ message }) {
     )
 }
 
-// ── Section Card Shell ────────────────────────────────────────────────────────
+//  Section Card Shell 
 
 function FeatureCard({ icon: Icon, iconGradient, title, badge, children, onClear, actionSlot }) {
     return (
@@ -188,7 +241,7 @@ function FeatureCard({ icon: Icon, iconGradient, title, badge, children, onClear
     )
 }
 
-// ── Priority Badge ────────────────────────────────────────────────────────────
+//  Priority Badge 
 
 const PRIORITY_STYLES = {
     urgent: 'bg-red-500/10 text-red-500 border-red-500/20',
@@ -210,7 +263,7 @@ function PriorityBadge({ priority }) {
     )
 }
 
-// ── Daily Plan Card ───────────────────────────────────────────────────────────
+//  Daily Plan Card 
 
 function DailyPlanResult({ data }) {
     const must_do = Array.isArray(data?.must_do) ? data.must_do : []
@@ -232,7 +285,7 @@ function DailyPlanResult({ data }) {
                             <span className={cn('w-1.5 h-1.5 rounded-full mt-1 shrink-0', dotColor)} />
                             <div className="flex-1 min-w-0">
                                 <p className="font-medium text-foreground leading-snug">
-                                    {typeof item?.task_id === 'string' ? item.task_id : (item?.title ?? '—')}
+                                    {item?.title ?? ' - '}
                                 </p>
                                 {typeof item?.reason === 'string' && (
                                     <p className="text-muted-foreground mt-0.5 leading-snug">{item.reason}</p>
@@ -272,9 +325,9 @@ function DailyPlanResult({ data }) {
     )
 }
 
-// ── Decompose Card ────────────────────────────────────────────────────────────
+//  Decompose Card 
 
-function DecomposeResult({ data }) {
+function DecomposeResult({ data, onAddTodo }) {
     const subtasks = Array.isArray(data?.subtasks) ? data.subtasks : []
     const original = typeof data?.original_task === 'string' ? data.original_task : null
 
@@ -307,17 +360,28 @@ function DecomposeResult({ data }) {
                     return (
                         <li
                             key={i}
-                            className="flex items-start gap-2.5 bg-muted/40 rounded-xl px-3 py-2.5 text-xs"
+                            className="flex items-start gap-2.5 bg-muted/40 rounded-xl px-3 py-2.5 text-xs group"
                         >
                             <span className="text-[10px] font-bold text-primary/50 w-4 shrink-0 mt-0.5 tabular-nums">
                                 {i + 1}.
                             </span>
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 pr-2">
                                 <span className="text-foreground leading-snug font-medium block">{title}</span>
                                 {description && (
                                     <span className="text-muted-foreground leading-snug mt-0.5 block">{description}</span>
                                 )}
                             </div>
+                            {onAddTodo && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border"
+                                    onClick={() => onAddTodo(title)}
+                                    title="Add to Todo"
+                                >
+                                    <Plus className="w-3.5 h-3.5" />
+                                </Button>
+                            )}
                         </li>
                     )
                 })}
@@ -326,12 +390,22 @@ function DecomposeResult({ data }) {
     )
 }
 
-// ── Weekly Review Card ────────────────────────────────────────────────────────
+//  Weekly Review Card 
 
 function WeeklyReviewResult({ data }) {
     const summary = typeof data?.summary === 'string' ? data.summary : null
-    const highlights = Array.isArray(data?.highlights) ? data.highlights : []
-    const recommendations = Array.isArray(data?.recommendations) ? data.recommendations : []
+    const highlightsObj = Array.isArray(data?.highlights) ? data.highlights : []
+    const recommendationsObj = Array.isArray(data?.recommendations) ? data.recommendations : []
+
+    // Normalize objects to strings to avoid rendering raw JSON on UI
+    const normalize = (item) => {
+        if (typeof item === 'string') return item
+        if (!item) return ''
+        return item.title || item.description || item.text || Object.values(item)[0] || JSON.stringify(item)
+    }
+
+    const highlights = highlightsObj.map(normalize)
+    const recommendations = recommendationsObj.map(normalize)
 
     // Trend badge helper
     const trend = typeof data?.trend === 'string' ? data.trend : null
@@ -384,7 +458,7 @@ function WeeklyReviewResult({ data }) {
     )
 }
 
-// ── Decompose Input Modal ─────────────────────────────────────────────────────
+//  Decompose Input Modal 
 
 function DecomposeInput({ onSubmit, onCancel, isLoading }) {
     const [taskTitle, setTaskTitle] = useState('')
@@ -449,7 +523,7 @@ function DecomposeInput({ onSubmit, onCancel, isLoading }) {
     )
 }
 
-// ── Loading Skeleton ──────────────────────────────────────────────────────────
+//  Loading Skeleton 
 
 function PlanSkeleton() {
     return (
@@ -500,31 +574,46 @@ function ReviewSkeleton() {
     )
 }
 
-// ── Main AIFeaturesPanel ──────────────────────────────────────────────────────
+//  Main AIFeaturesPanel 
 
 export default function AIFeaturesPanel() {
-    const { user, tasks, activeProjectId } = useStore(useShallow(s => ({
+    const { user, tasks, activeProjectId, columns } = useStore(useShallow(s => ({
         user: s.user,
         tasks: s.tasks,
         activeProjectId: s.activeProjectId,
+        columns: s.columns
     })))
 
+    const { addTask } = useTasks()
+
     const {
-        plan, decompose, review,
-        generatePlan, generateDecompose, generateReview,
+        decompose, review,
+        generateDecompose, generateReview,
         clearMode,
     } = useAIFeatures()
 
     const [decomposeInputOpen, setDecomposeInputOpen] = useState(false)
     const [activeTab, setActiveTab] = useState('plan') // 'plan' | 'decompose' | 'review'
+    // Local plan state  -  bypasses edge function for instant generation
+    const [planState, setPlanLocal] = useState({ data: null, isLoading: false, error: null, isEmpty: false })
 
-    // ── Handlers ──────────────────────────────────────────────────────────────
+    //  Handlers 
 
     const handleGeneratePlan = useCallback(() => {
         if (!activeProjectId) return
-        const payload = buildPlanPayload(tasks, activeProjectId)
-        generatePlan(payload)
-    }, [tasks, activeProjectId, generatePlan])
+        const result = generateDailyPlan(tasks, activeProjectId)
+        // Bypass edge function  -  set plan state directly with local result
+        const hasAny = result.must_do.length > 0 || result.should_do.length > 0 || result.optional.length > 0
+        clearMode('plan')
+        // We use a tiny timeout so the cleared state renders before setting data
+        setTimeout(() => {
+            if (!hasAny) {
+                setPlanLocal({ data: null, isLoading: false, error: null, isEmpty: true })
+            } else {
+                setPlanLocal({ data: result, isLoading: false, error: null, isEmpty: false })
+            }
+        }, 10)
+    }, [tasks, activeProjectId, clearMode])
 
     const handleGenerateReview = useCallback(() => {
         if (!activeProjectId) return
@@ -538,18 +627,30 @@ export default function AIFeaturesPanel() {
         generateDecompose(payload)
     }, [generateDecompose])
 
-    // ── Runtime analysis of current tab state ─────────────────────────────────
+    const handleDecomposeAddTodo = useCallback((title) => {
+        if (!activeProjectId) return
+        const projectCols = columns[activeProjectId] ?? []
+        const todoCol = projectCols.find(c => c.name.toLowerCase() === 'todo')
+        if (!todoCol) {
+            toast.error('No Todo column found')
+            return
+        }
+        addTask(activeProjectId, todoCol.id, { title, status: 'todo' })
+        toast.success(`Added to Tasks`)
+    }, [activeProjectId, columns, addTask])
+
+    //  Runtime analysis of current tab state 
 
     const activeState = useMemo(() => {
-        if (activeTab === 'plan') return plan
+        if (activeTab === 'plan') return planState
         if (activeTab === 'decompose') return decompose
         if (activeTab === 'review') return review
-        return plan
-    }, [activeTab, plan, decompose, review])
+        return planState
+    }, [activeTab, planState, decompose, review])
 
     const hasData = !!activeState.data
 
-    // ── Tab config ─────────────────────────────────────────────────────────────
+    //  Tab config 
 
     const TABS = [
         { id: 'plan', label: 'Daily Plan', icon: Calendar, color: 'bg-blue-500' },
@@ -583,9 +684,9 @@ export default function AIFeaturesPanel() {
             {/* Panel content */}
             {activeTab === 'plan' && (
                 <PlanPanel
-                    state={plan}
+                    state={planState}
                     onGenerate={handleGeneratePlan}
-                    onClear={() => clearMode('plan')}
+                    onClear={() => setPlanLocal({ data: null, isLoading: false, error: null, isEmpty: false })}
                 />
             )}
             {activeTab === 'decompose' && (
@@ -596,6 +697,7 @@ export default function AIFeaturesPanel() {
                     onCancelInput={() => setDecomposeInputOpen(false)}
                     onSubmitInput={handleDecomposeSubmit}
                     onClear={() => { clearMode('decompose'); setDecomposeInputOpen(false) }}
+                    onAddTodo={handleDecomposeAddTodo}
                 />
             )}
             {activeTab === 'review' && (
@@ -609,7 +711,7 @@ export default function AIFeaturesPanel() {
     )
 }
 
-// ── Plan Panel ────────────────────────────────────────────────────────────────
+//  Plan Panel 
 
 function PlanPanel({ state, onGenerate, onClear }) {
     const { data, isLoading, error, isEmpty } = state
@@ -664,9 +766,9 @@ function PlanPanel({ state, onGenerate, onClear }) {
     )
 }
 
-// ── Decompose Panel ───────────────────────────────────────────────────────────
+//  Decompose Panel 
 
-function DecomposePanel({ state, inputOpen, onOpenInput, onCancelInput, onSubmitInput, onClear }) {
+function DecomposePanel({ state, inputOpen, onOpenInput, onCancelInput, onSubmitInput, onClear, onAddTodo }) {
     const { data, isLoading, error, isEmpty } = state
 
     return (
@@ -693,7 +795,7 @@ function DecomposePanel({ state, inputOpen, onOpenInput, onCancelInput, onSubmit
             {isLoading && <DecomposeSkeleton />}
             {!isLoading && error && <ErrorState message={error} onRetry={onOpenInput} />}
             {!isLoading && isEmpty && <EmptyState message="Couldn't decompose this task. Try a more descriptive task title." />}
-            {!isLoading && !error && !isEmpty && data && <DecomposeResult data={data} />}
+            {!isLoading && !error && !isEmpty && data && <DecomposeResult data={data} onAddTodo={onAddTodo} />}
             {!isLoading && !error && !isEmpty && !data && !inputOpen && (
                 <div className="flex flex-col items-center gap-4 py-4 text-center">
                     <div className="flex items-center justify-center">
@@ -702,7 +804,7 @@ function DecomposePanel({ state, inputOpen, onOpenInput, onCancelInput, onSubmit
                     <div>
                         <p className="text-sm font-medium text-foreground mb-1">Decompose any task</p>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                            Paste a vague or complex task. AI breaks it into 4–8 concrete, sequential subtasks with action verbs.
+                            Paste a vague or complex task. AI breaks it into 4-8 concrete, sequential subtasks with action verbs.
                         </p>
                     </div>
                     <Button
@@ -726,7 +828,7 @@ function DecomposePanel({ state, inputOpen, onOpenInput, onCancelInput, onSubmit
     )
 }
 
-// ── Review Panel ──────────────────────────────────────────────────────────────
+//  Review Panel 
 
 function ReviewPanel({ state, onGenerate, onClear }) {
     const { data, isLoading, error, isEmpty } = state
@@ -764,7 +866,7 @@ function ReviewPanel({ state, onGenerate, onClear }) {
                     <div>
                         <p className="text-sm font-medium text-foreground mb-1">Get your weekly review</p>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                            AI analyzes this week vs last week — highlights wins, spots patterns, and suggests improvements.
+                            AI analyzes this week vs last week  -  highlights wins, spots patterns, and suggests improvements.
                         </p>
                     </div>
                     <Button

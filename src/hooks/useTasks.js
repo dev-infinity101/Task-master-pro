@@ -1,5 +1,5 @@
 /**
- * useTasks.js — Task operations with optimistic updates
+ * useTasks.js  -  Task operations with optimistic updates
  *
  * Every mutation:
  * 1. Updates store immediately (optimistic)
@@ -121,7 +121,7 @@ export function useTasks() {
   )
 
   /**
-   * moveTask — called by Kanban drag-and-drop
+   * moveTask  -  called by Kanban drag-and-drop
    * Calculates fractional position between prev and next tasks.
    */
   const moveTask = useCallback(

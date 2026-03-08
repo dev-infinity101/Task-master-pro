@@ -1,5 +1,5 @@
 /**
- * useAIAnalytics.js — Analytics page narration hook
+ * useAIAnalytics.js  -  Analytics page narration hook
  *
  * Thin wrapper around useAIFeatures({ narrate }) so the
  * Analytics page doesn't need to import useAIFeatures directly.

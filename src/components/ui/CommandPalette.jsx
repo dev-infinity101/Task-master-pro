@@ -1,5 +1,5 @@
 /**
- * CommandPalette.jsx — Cmd+K command palette
+ * CommandPalette.jsx  -  Cmd+K command palette
  *
  * Features:
  * - Global keyboard shortcut (Cmd/Ctrl + K)

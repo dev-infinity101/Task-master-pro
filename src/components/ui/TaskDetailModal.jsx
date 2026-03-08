@@ -5,7 +5,7 @@
  * Opens when any task card is clicked anywhere in the app.
  *
  * Features:
- * - URL-driven state: ?task=<id> — supports deep-linking + browser back button
+ * - URL-driven state: ?task=<id>  -  supports deep-linking + browser back button
  * - Scale + fade entry animation (0.95→1 over 200ms)
  * - Auto-save: title/description debounced 500ms; other fields immediate
  * - Deadline panel with live countdown + deadline_type badge
@@ -27,7 +27,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { useTasks } from '../../hooks/useTasks'
 import { cn } from '@/lib/utils'
 
-/* ─── Helpers ─────────────────────────────────────────────────────── */
+/*  Helpers  */
 const PRIORITY_CONFIG = {
     urgent: { label: 'Urgent', color: 'text-red-500', bg: 'bg-red-500/10', dot: 'bg-red-500' },
     high: { label: 'High', color: 'text-orange-500', bg: 'bg-orange-500/10', dot: 'bg-orange-500' },
@@ -78,7 +78,7 @@ function toLocalDatetimeString(isoStr) {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-/* ─── SubtaskRow ───────────────────────────────────────────────────── */
+/*  SubtaskRow  */
 function SubtaskRow({ subtask, onToggle, onDelete }) {
     const isDone = subtask.status === 'done'
     return (
@@ -107,7 +107,7 @@ function SubtaskRow({ subtask, onToggle, onDelete }) {
     )
 }
 
-/* ─── Main Modal ───────────────────────────────────────────────────── */
+/*  Main Modal  */
 export default function TaskDetailModal() {
     const [searchParams, setSearchParams] = useSearchParams()
     const taskId = searchParams.get('task')
@@ -213,7 +213,7 @@ export default function TaskDetailModal() {
     const tags = task.tags ?? []
     const completedSubtasks = subtasks.filter((s) => s.status === 'done').length
 
-    /* ── Immediate updates ─────────────────────────────────────── */
+    /*  Immediate updates  */
     const handlePriorityChange = (p) => updateTask(task.id, projectId, { priority: p })
 
     const handleStatusCycle = () => {
@@ -237,7 +237,7 @@ export default function TaskDetailModal() {
         })
     }
 
-    /* ── Subtasks ─────────────────────────────────────────────── */
+    /*  Subtasks  */
     const handleAddSubtask = async (e) => {
         e.preventDefault()
         if (!newSubtask.trim()) return
@@ -260,7 +260,7 @@ export default function TaskDetailModal() {
         deleteTask(subtaskId, projectId)
     }
 
-    /* ── Tags ─────────────────────────────────────────────────── */
+    /*  Tags  */
     const handleAddTag = (e) => {
         e.preventDefault()
         const t = newTag.trim().toLowerCase()
@@ -273,7 +273,7 @@ export default function TaskDetailModal() {
         updateTask(task.id, projectId, { tags: tags.filter((x) => x !== t) })
     }
 
-    /* ── Delete ────────────────────────────────────────────────── */
+    /*  Delete  */
     const handleDelete = async () => {
         if (!deleteConfirm) { setDeleteConfirm(true); return }
         closeModal()
@@ -281,7 +281,7 @@ export default function TaskDetailModal() {
         toast.success('Task deleted')
     }
 
-    /* ── Urgency badge styles ──────────────────────────────────── */
+    /*  Urgency badge styles  */
     const urgencyBadge = {
         normal: null,
         warning: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800',
@@ -318,7 +318,7 @@ export default function TaskDetailModal() {
                         urgency === 'warning' && 'border-amber-400/40',
                     )}
                 >
-                    {/* ── HEADER ────────────────────────────────────────── */}
+                    {/*  HEADER  */}
                     <div className="flex items-start gap-3 p-5 pb-4 border-b border-border">
                         <div className="flex-1 min-w-0">
                             <input
@@ -333,7 +333,7 @@ export default function TaskDetailModal() {
                                 placeholder="Task title…"
                             />
                             <div className="flex flex-wrap items-center gap-2 mt-2 px-1">
-                                {/* Status badge — click to cycle */}
+                                {/* Status badge  -  click to cycle */}
                                 <button
                                     onClick={handleStatusCycle}
                                     className={cn(
@@ -392,7 +392,7 @@ export default function TaskDetailModal() {
 
                     <div className="p-5 space-y-6">
 
-                        {/* ── DEADLINE PANEL ──────────────────────────────── */}
+                        {/*  DEADLINE PANEL  */}
                         <section>
                             <div className="flex items-center gap-2 mb-3">
                                 <AlarmClock className="w-4 h-4 text-muted-foreground" />
@@ -442,7 +442,7 @@ export default function TaskDetailModal() {
                             </div>
                         </section>
 
-                        {/* ── DESCRIPTION ─────────────────────────────────── */}
+                        {/*  DESCRIPTION  */}
                         <section>
                             <div className="flex items-center gap-2 mb-3">
                                 <span className="text-muted-foreground text-sm">📝</span>
@@ -461,7 +461,7 @@ export default function TaskDetailModal() {
                             />
                         </section>
 
-                        {/* ── SUBTASKS ────────────────────────────────────── */}
+                        {/*  SUBTASKS  */}
                         <section>
                             <div className="flex items-center gap-2 mb-3">
                                 <CheckSquare className="w-4 h-4 text-muted-foreground" />
@@ -518,7 +518,7 @@ export default function TaskDetailModal() {
                             </form>
                         </section>
 
-                        {/* ── TAGS ────────────────────────────────────────── */}
+                        {/*  TAGS  */}
                         <section>
                             <div className="flex items-center gap-2 mb-3">
                                 <Tag className="w-4 h-4 text-muted-foreground" />
@@ -559,7 +559,7 @@ export default function TaskDetailModal() {
                             </form>
                         </section>
 
-                        {/* ── META FOOTER ─────────────────────────────────── */}
+                        {/*  META FOOTER  */}
                         <section className="pt-4 border-t border-border">
                             <div className="flex items-center justify-between text-xs text-muted-foreground flex-wrap gap-3">
                                 <div className="space-y-1">

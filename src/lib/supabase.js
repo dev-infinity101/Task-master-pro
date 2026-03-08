@@ -1,7 +1,7 @@
 /**
- * supabase.js — Supabase singleton client
+ * supabase.js  -  Supabase singleton client
  *
- * IMPORTANT — keep this config minimal.
+ * IMPORTANT  -  keep this config minimal.
  *
  * Things we deliberately do NOT set:
  *  - flowType: 'pkce'     → PKCE delays Realtime JWT acquisition → 401 on

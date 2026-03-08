@@ -15,8 +15,10 @@ import { cn } from '@/lib/utils'
 import useStore from '../../store/store'
 import { useShallow } from 'zustand/react/shallow'
 
-/* ─── Urgency calculation ─────────────────────────────────────── */
-export function getDeadlineUrgency(deadline, overdue) {
+/*  Urgency calculation  */
+export function getDeadlineUrgency(deadline, overdue, isDone = false) {
+    // Completed tasks are never overdue  -  no urgency indicators at all
+    if (isDone) return 'none'
     if (overdue) return 'overdue'
     if (!deadline) return 'none'
     const delta = new Date(deadline).getTime() - Date.now()
@@ -26,7 +28,7 @@ export function getDeadlineUrgency(deadline, overdue) {
     return 'normal'
 }
 
-/* ─── Urgency → icon colour classes ─────────────────────────── */
+/*  Urgency → icon colour classes  */
 const URGENCY_ICON = {
     none: 'text-muted-foreground/40 hover:text-muted-foreground/70',
     normal: 'text-muted-foreground/70 hover:text-muted-foreground',
@@ -35,20 +37,22 @@ const URGENCY_ICON = {
     overdue: 'text-red-600 hover:text-red-500 animate-[deadline-pulse_2s_ease-in-out_infinite]',
 }
 
-/* ─── DeadlinePopover Trigger Button ─────────────────────────── */
+/*  DeadlinePopover Trigger Button  */
 export default function DeadlinePopover({ task, projectId }) {
     const openDeadlineModal = useStore((s) => s.openDeadlineModal)
+    const isDone = task.status === 'done'
 
     const urgency = useMemo(
-        () => getDeadlineUrgency(task.deadline, task.overdue),
-        [task.deadline, task.overdue]
+        () => getDeadlineUrgency(task.deadline, task.overdue, isDone),
+        [task.deadline, task.overdue, isDone]
     )
 
     /* Tooltip label */
     const triggerLabel = useMemo(() => {
-        if (!task.deadline) return 'No deadline set — click to add'
+        if (!task.deadline) return 'No deadline set  -  click to add'
         const d = new Date(task.deadline)
         const formatted = format(d, 'MMM d · h:mm a')
+        if (isDone) return `Deadline: ${formatted}`
         const delta = d.getTime() - Date.now()
         if (urgency === 'overdue') return `Overdue · ${formatted}`
         if (urgency === 'critical') {
@@ -57,10 +61,12 @@ export default function DeadlinePopover({ task, projectId }) {
         }
         if (urgency === 'warning') return `Due soon · ${formatted}`
         return `Due ${formatted}`
-    }, [task.deadline, urgency])
+    }, [task.deadline, urgency, isDone])
 
-    /* Badge text shown inline beside icon */
+    /* Badge text  -  hidden for completed tasks */
     const badgeText = useMemo(() => {
+        // No deadline badge on completed tasks
+        if (isDone) return null
         if (!task.deadline) return null
         const d = new Date(task.deadline)
         const delta = d.getTime() - Date.now()
@@ -74,7 +80,7 @@ export default function DeadlinePopover({ task, projectId }) {
         const tomorrow = addDays(new Date(), 1)
         if (format(d, 'yyyyMMdd') === format(tomorrow, 'yyyyMMdd')) return 'Tomorrow'
         return format(d, 'MMM d')
-    }, [task.deadline, urgency])
+    }, [task.deadline, urgency, isDone])
 
     const handleClick = (e) => {
         e.stopPropagation()

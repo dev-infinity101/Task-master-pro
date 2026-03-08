@@ -15,7 +15,7 @@ import useStore from '../store/store'
 import { cn } from '@/lib/utils'
 import TaskMasterLogo from '@/components/ui/TaskMasterLogo'
 
-/* ── Custom Parallax / Inertia Hook ───────────────────── */
+/*  Custom Parallax / Inertia Hook  */
 function useParallax(speed = 0.5) {
   const [offset, setOffset] = useState(0)
 
@@ -46,7 +46,7 @@ function useParallax(speed = 0.5) {
   return offset
 }
 
-/* ── Layout primitives ───────────────────────────────── */
+/*  Layout primitives  */
 function Container({ className, ...props }) {
   return (
     <div
@@ -56,7 +56,7 @@ function Container({ className, ...props }) {
   )
 }
 
-/* ── Nav (Light) ───────────────────────────────────────── */
+/*  Nav (Light)  */
 function Nav({ mobileOpen, setMobileOpen }) {
   return (
     <header className="absolute top-0 inset-x-0 z-50 bg-transparent h-24 transition-all duration-300">
@@ -103,7 +103,7 @@ function Nav({ mobileOpen, setMobileOpen }) {
   )
 }
 
-/* ── Hero (Light, Asymmetrical Parallax) ─────────────── */
+/*  Hero (Light, Asymmetrical Parallax)  */
 function HeroSection() {
   const parallax1 = useParallax(0.15)
   const parallax2 = useParallax(0.3)
@@ -235,7 +235,7 @@ function HeroSection() {
   )
 }
 
-/* ── Grid Section (Light) ────────────────────────────── */
+/*  Grid Section (Light)  */
 function GridSection() {
   return (
     <section id="architecture" className="py-32 bg-white relative border-t border-gray-100">
@@ -266,7 +266,7 @@ function GridSection() {
   )
 }
 
-/* ── CTA Section (Light) ─────────────────────────────── */
+/*  CTA Section (Light)  */
 function CTASection() {
   return (
     <section className="relative py-40 bg-[#F0F4FF] overflow-hidden flex items-center justify-center border-t border-blue-100">
@@ -286,7 +286,7 @@ function CTASection() {
   )
 }
 
-/* ── Footer (Light) ──────────────────────────────────── */
+/*  Footer (Light)  */
 function Footer() {
   return (
     <footer className="py-10 bg-white border-t border-gray-100">
@@ -305,7 +305,7 @@ function Footer() {
   )
 }
 
-/* ── Page Root ───────────────────────────────────────── */
+/*  Page Root  */
 export default function LandingPage() {
   const session = useStore((s) => s.session)
   const [mobileOpen, setMobileOpen] = useState(false)

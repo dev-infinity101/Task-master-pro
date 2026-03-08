@@ -1,5 +1,5 @@
 /**
- * useAIFeatures.js — Production-grade AI features hook
+ * useAIFeatures.js  -  Production-grade AI features hook
  *
  * Covers all 4 structured AI modes:
  *   - plan      → Daily Auto-Planning
@@ -26,7 +26,7 @@ import { toast } from 'sonner'
 const EDGE_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// ── Token helper ──────────────────────────────────────────────────────────────
+//  Token helper 
 // Reads from Zustand store first (populated by onAuthStateChange → always fresh)
 // Falls back to getSession() + proactive refresh if store session is stale.
 
@@ -36,7 +36,7 @@ async function getToken() {
     if (storeSession?.access_token) {
         const nowSeconds = Math.floor(Date.now() / 1000)
         const expiresAt = storeSession.expires_at ?? 0
-        // Token is valid for more than 90 more seconds — use it directly
+        // Token is valid for more than 90 more seconds  -  use it directly
         if (expiresAt - nowSeconds > 90) {
             return storeSession.access_token
         }
@@ -52,7 +52,7 @@ async function getToken() {
     }
 }
 
-// ── Edge function call with 401-retry ────────────────────────────────────────
+//  Edge function call with 401-retry 
 
 async function callEdge(mode, payload, signal) {
     const makeRequest = async (token) => {
@@ -81,7 +81,7 @@ async function callEdge(mode, payload, signal) {
                 res = await makeRequest(session.access_token)
             }
         } catch {
-            // Refresh failed — fall through, res is still 401
+            // Refresh failed  -  fall through, res is still 401
         }
     }
 
@@ -95,13 +95,13 @@ async function callEdge(mode, payload, signal) {
     return res
 }
 
-// ── State factory ─────────────────────────────────────────────────────────────
+//  State factory 
 
 function makeSlice() {
     return { data: null, isLoading: false, error: null, isEmpty: false }
 }
 
-// ── Main hook ─────────────────────────────────────────────────────────────────
+//  Main hook 
 
 export function useAIFeatures() {
     const [plan, setPlan] = useState(makeSlice())
@@ -114,7 +114,7 @@ export function useAIFeatures() {
 
     const setters = { plan: setPlan, decompose: setDecompose, review: setReview, narrate: setNarrate }
 
-    // ── Generic runner ──────────────────────────────────────────────────────────
+    //  Generic runner 
 
     const run = useCallback(async (mode, payload) => {
         if (inFlight.current[mode]) return
@@ -127,7 +127,7 @@ export function useAIFeatures() {
             const res = await callEdge(mode, payload, undefined)
 
             if (res.status === 429) {
-                toast.error('Rate limit reached — please wait a moment.')
+                toast.error('Rate limit reached  -  please wait a moment.')
                 set(prev => ({ ...prev, isLoading: false, error: 'Rate limit reached. Please wait.' }))
                 return
             }

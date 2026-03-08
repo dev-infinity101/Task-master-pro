@@ -1,18 +1,18 @@
 /**
- * Analytics.jsx — Accurate, real-time analytics dashboard
+ * Analytics.jsx  -  Accurate, real-time analytics dashboard
  *
  * Data integrity rules:
- * ─────────────────────────────────────────────────────────
+ * 
  * 1. Only ROOT tasks (parent_task_id === null) are counted in KPIs
- *    and status/priority charts — subtasks are a separate dimension.
+ *    and status/priority charts  -  subtasks are a separate dimension.
  * 2. Subtask completion is tracked separately as a progress metric.
  * 3. Weekly "Completed" uses the actual `completed_at` timestamp.
  * 4. Weekly "Added" uses the actual `created_at` timestamp.
  * 5. The `timeRange` switcher filters both weekly sets consistently.
- * 6. Overdue uses local midnight of due_date — no off-by-one from TZ.
+ * 6. Overdue uses local midnight of due_date  -  no off-by-one from TZ.
  * 7. All derived values are memoized and depend only on `projectTasks`.
  *    → When Zustand updates a task, React re-renders, useMemo recomputes
- *      fresh — zero stale data possible.
+ *      fresh  -  zero stale data possible.
  */
 
 import { useMemo, useEffect, useRef, useState } from 'react'
@@ -36,7 +36,7 @@ import { useProjectLoader } from '../hooks/useProjectLoader'
 import HourglassLoader from '../components/ui/HourglassLoader'
 import { useAIAnalytics } from '../hooks/useAIAnalytics'
 
-/* ─── Constants ──────────────────────────────── */
+/*  Constants  */
 const STATUS_COLORS = {
   todo: '#94a3b8',
   in_progress: '#3b82f6',
@@ -54,7 +54,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 // Time-range window in days
 const RANGE_DAYS = { '7d': 7, '30d': 30, '90d': 90 }
 
-/* ─── Utility helpers ────────────────────────── */
+/*  Utility helpers  */
 
 /**
  * Returns midnight (00:00:00.000) of the date string in LOCAL time.
@@ -88,7 +88,7 @@ function buildBuckets(rangeKey) {
   now.setHours(23, 59, 59, 999)
 
   if (days <= 7) {
-    // Daily buckets — last N days (Mon…Sun labels)
+    // Daily buckets  -  last N days (Mon…Sun labels)
     const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     return Array.from({ length: days }, (_, i) => {
       const d = new Date()
@@ -99,7 +99,7 @@ function buildBuckets(rangeKey) {
     })
   }
 
-  // Weekly buckets — last N days bucketed by Mon-starting week
+  // Weekly buckets  -  last N days bucketed by Mon-starting week
   const earliest = new Date()
   earliest.setDate(earliest.getDate() - days)
   earliest.setHours(0, 0, 0, 0)
@@ -120,7 +120,7 @@ function buildBuckets(rangeKey) {
   return buckets
 }
 
-/* ─── useInView ──────────────────────────────── */
+/*  useInView  */
 function useInView(threshold = 0.1) {
   const ref = useRef(null)
   const [inView, setInView] = useState(false)
@@ -137,7 +137,7 @@ function useInView(threshold = 0.1) {
   return [ref, inView]
 }
 
-/* ─── useCountUp ─────────────────────────────── */
+/*  useCountUp  */
 function useCountUp(target, duration = 600, trigger = false) {
   const [value, setValue] = useState(0)
   // Reset to 0 whenever target changes so the animation replays
@@ -158,7 +158,7 @@ function useCountUp(target, duration = 600, trigger = false) {
   return value
 }
 
-/* ─── KPI Card ───────────────────────────────── */
+/*  KPI Card  */
 function KpiCard({ icon: Icon, iconColor, label, value, trend, delay = 0 }) {
   const [ref, inView] = useInView()
   const count = useCountUp(value, 600, inView)
@@ -212,7 +212,7 @@ function KpiCard({ icon: Icon, iconColor, label, value, trend, delay = 0 }) {
   )
 }
 
-/* ─── Progress Ring ──────────────────────────── */
+/*  Progress Ring  */
 function ProgressRing({ percent, size = 120, stroke = 10, color = '#22c55e', label, sublabel }) {
   const [ref, inView] = useInView()
   const [triggered, setTriggered] = useState(false)
@@ -251,7 +251,7 @@ function ProgressRing({ percent, size = 120, stroke = 10, color = '#22c55e', lab
   )
 }
 
-/* ─── Custom Tooltip ─────────────────────────── */
+/*  Custom Tooltip  */
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
@@ -268,7 +268,7 @@ function CustomTooltip({ active, payload, label }) {
   )
 }
 
-/* ─── Insight Card ───────────────────────────── */
+/*  Insight Card  */
 function InsightCard({ text }) {
   return (
     <div className="bg-card border border-border rounded-lg p-4 flex items-start gap-3 transition-colors duration-150 hover:border-border/80">
@@ -283,7 +283,7 @@ function InsightCard({ text }) {
   )
 }
 
-/* ─── AI Analysis Card ───────────────────────── */
+/*  AI Analysis Card  */
 function AIAnalysisCard({ result, isLoading, error, isEmpty, onGenerate }) {
   const hasResult = typeof result?.headline === 'string' && result.headline.length > 0
   return (
@@ -374,7 +374,7 @@ function AIAnalysisCard({ result, isLoading, error, isEmpty, onGenerate }) {
   )
 }
 
-/* ─── Timeline Strip ─────────────────────────── */
+/*  Timeline Strip  */
 function TimelineStrip() {
   const currentMonth = new Date().getMonth()
   return (
@@ -434,19 +434,19 @@ export default function Analytics() {
   // AI narration
   const { result: aiResult, isLoading: aiLoading, error: aiError, isEmpty: aiEmpty, refresh: aiRefresh } = useAIAnalytics()
 
-  // ── All tasks for the active project (flat array from store) ──────────
+  //  All tasks for the active project (flat array from store) 
   const allProjectTasks = useMemo(
     () => tasks[activeProjectId] ?? [],
     [tasks, activeProjectId]
   )
 
-  // ── Root tasks only (exclude subtasks from KPIs / status / priority) ──
+  //  Root tasks only (exclude subtasks from KPIs / status / priority) 
   const rootTasks = useMemo(
     () => allProjectTasks.filter(t => t.parent_task_id === null || t.parent_task_id === undefined),
     [allProjectTasks]
   )
 
-  // ── Subtasks (for a separate completion metric) ───────────────────────
+  //  Subtasks (for a separate completion metric) 
   const subtasks = useMemo(
     () => allProjectTasks.filter(t => t.parent_task_id !== null && t.parent_task_id !== undefined),
     [allProjectTasks]
@@ -456,7 +456,7 @@ export default function Analytics() {
     [subtasks]
   )
 
-  // ── KPI derivations (root tasks only) ────────────────────────────────
+  //  KPI derivations (root tasks only) 
   const totalTasks = rootTasks.length
   const completedTasks = useMemo(() => rootTasks.filter(t => t.status === 'done').length, [rootTasks])
   const inProgress = useMemo(() => rootTasks.filter(t => t.status === 'in_progress').length, [rootTasks])
@@ -477,7 +477,7 @@ export default function Analytics() {
     ? Math.round((completedTasks / totalTasks) * 100)
     : 0
 
-  // ── Status distribution (root tasks) ─────────────────────────────────
+  //  Status distribution (root tasks) 
   const statusData = useMemo(() => {
     return [
       { name: 'To Do', value: todoCount, color: STATUS_COLORS.todo },
@@ -486,7 +486,7 @@ export default function Analytics() {
     ].filter(d => d.value > 0)
   }, [todoCount, inProgress, completedTasks])
 
-  // ── Priority distribution (active root tasks — not 'done') ────────────
+  //  Priority distribution (active root tasks  -  not 'done') 
   // We exclude done tasks here so you see your current workload distribution.
   const priorityData = useMemo(() => {
     const activeTasks = rootTasks.filter(t => t.status !== 'done')
@@ -504,7 +504,7 @@ export default function Analytics() {
       .filter(d => d.value > 0)
   }, [rootTasks])
 
-  // ── Weekly / time-range activity (real timestamps) ────────────────────
+  //  Weekly / time-range activity (real timestamps) 
   const activityData = useMemo(() => {
     const buckets = buildBuckets(timeRange)
 
@@ -527,16 +527,16 @@ export default function Analytics() {
     })
   }, [allProjectTasks, timeRange])
 
-  // ── Insight text ──────────────────────────────────────────────────────
+  //  Insight text 
   const insightText = useMemo(() => {
     if (totalTasks === 0)
       return 'Add tasks to your project to start tracking progress here.'
     if (completedTasks === totalTasks)
       return `🎉 All ${totalTasks} tasks complete! Time to plan what's next.`
     if (completionRate > 75)
-      return `Nearly there — ${completionRate}% done, ${totalTasks - completedTasks} left. Strong finish incoming.`
+      return `Nearly there  -  ${completionRate}% done, ${totalTasks - completedTasks} left. Strong finish incoming.`
     if (completionRate > 50)
-      return `Strong momentum — ${completionRate}% complete${inProgress > 0 ? `, ${inProgress} task${inProgress > 1 ? 's' : ''} in progress` : ''}. Keep the streak.`
+      return `Strong momentum  -  ${completionRate}% complete${inProgress > 0 ? `, ${inProgress} task${inProgress > 1 ? 's' : ''} in progress` : ''}. Keep the streak.`
     if (completionRate > 0) {
       const remaining = totalTasks - completedTasks
       return `${completionRate}% complete. Closing ${Math.min(3, remaining)} tasks a day clears this backlog in under a week.`
@@ -548,14 +548,47 @@ export default function Analytics() {
 
   const [chartsRef, chartsInView] = useInView(0.05)
 
-  // Build metrics payload for AI narration — only real chart-derived data, no fabricated comparisons
+  // Build metrics payload for AI narration  -  rich historical data for meaningful insights
   const buildAIMetrics = () => {
-    // Summarise the last 7 activity buckets (most recent first)
+    const now = new Date()
+    const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+    // Recent 7-bucket activity summary
     const recentActivity = activityData.slice(-7).map(b => ({
       label: b.label,
       completed: b.completed,
       added: b.added,
     }))
+
+    // Daily completion counts by day-of-week (from completed_at timestamps)
+    const byDow = { Sun: 0, Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0 }
+    allProjectTasks.forEach(t => {
+      if (t.status === 'done' && t.completed_at) {
+        const dow = DAY_NAMES[new Date(t.completed_at).getDay()]
+        byDow[dow]++
+      }
+    })
+    const peakDay = Object.entries(byDow).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'N/A'
+
+    // Deadline adherence: completed tasks that had a due_date  -  how many were finished on time
+    const withDeadline = allProjectTasks.filter(t => t.status === 'done' && t.due_date && t.completed_at)
+    const onTime = withDeadline.filter(t => new Date(t.completed_at) <= new Date(t.due_date)).length
+    const deadlineAdherenceRate = withDeadline.length > 0
+      ? Math.round((onTime / withDeadline.length) * 100)
+      : null
+
+    // Average daily velocity (completions per active day in past 30d)
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000)
+    const completedLast30 = allProjectTasks.filter(t =>
+      t.status === 'done' && t.completed_at && new Date(t.completed_at) >= thirtyDaysAgo
+    )
+    const activeDays = new Set(completedLast30.map(t =>
+      new Date(t.completed_at).toDateString()
+    )).size
+    const avgDailyVelocity = activeDays > 0
+      ? +(completedLast30.length / activeDays).toFixed(1)
+      : 0
+
     return {
       period: timeRange,
       completion_rate: completionRate,
@@ -564,16 +597,22 @@ export default function Analytics() {
       in_progress_count: inProgress,
       todo_count: todoCount,
       overdue_count: overdueCount,
-      weekly_activity: recentActivity,
+      recent_activity: recentActivity,
+      completions_by_day_of_week: byDow,
+      peak_productivity_day: peakDay,
+      deadline_adherence_rate_pct: deadlineAdherenceRate,
+      avg_daily_velocity_30d: avgDailyVelocity,
+      active_days_last_30d: activeDays,
+      tasks_completed_last_30d: completedLast30.length,
     }
   }
 
-  /* ─── Loading ─── */
+  /*  Loading  */
   if (loading) {
     return <HourglassLoader />
   }
 
-  /* ─── No project ─── */
+  /*  No project  */
   if (!activeProjectId) {
     return (
       <div className="flex flex-col h-full items-center justify-center gap-4 text-muted-foreground">
@@ -599,7 +638,7 @@ export default function Analytics() {
           <h1 className="text-2xl font-bold text-foreground leading-tight">Analytics</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Project performance &amp; insights</p>
         </div>
-        {/* Time range — affects activity chart */}
+        {/* Time range  -  affects activity chart */}
         <div className="flex items-center bg-muted/50 border border-border rounded-xl p-1 gap-0.5">
           {[['7d', '7 days'], ['30d', '30 days'], ['90d', '90 days']].map(([val, label]) => (
             <button
@@ -655,7 +694,7 @@ export default function Analytics() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-foreground mb-1.5 uppercase tracking-wide">
-              Subtask completion — {completedSubtasks} / {subtasks.length}
+              Subtask completion  -  {completedSubtasks} / {subtasks.length}
             </p>
             <div className="w-full h-1.5 bg-muted rounded-sm overflow-hidden">
               <div

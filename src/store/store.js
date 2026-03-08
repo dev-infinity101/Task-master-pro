@@ -1,14 +1,14 @@
 /**
- * store.js — Global Zustand store
+ * store.js  -  Global Zustand store
  *
  * Architecture:
  * - Auth slice: real Supabase session, not a boolean flag
  * - Tasks slice: server-synced with optimistic updates + rollback
- * - UI slice: theme, sidebar, active project — NOT persisted (session-only)
+ * - UI slice: theme, sidebar, active project  -  NOT persisted (session-only)
  * - Projects/Columns: cached from DB, invalidated on Realtime events
  *
  * Persistence: only auth token is persisted (Supabase handles this internally).
- * Tasks are NOT persisted in localStorage — they come from the DB.
+ * Tasks are NOT persisted in localStorage  -  they come from the DB.
  * This prevents stale data bugs across devices/sessions.
  */
 
@@ -19,9 +19,7 @@ import { devtools } from 'zustand/middleware'
 const useStore = create(
   devtools(
     immer((set, get) => ({
-      // ─────────────────────────────────────────
       // AUTH SLICE
-      // ─────────────────────────────────────────
       session: null,        // Supabase session object
       user: null,           // auth.users row
       profile: null,        // profiles table row (full_name, avatar, timezone)
@@ -52,9 +50,9 @@ const useStore = create(
           state.authLoading = false
         }),
 
-      // ─────────────────────────────────────────
+      // 
       // PROJECTS SLICE
-      // ─────────────────────────────────────────
+      // 
       projects: [],
       activeProjectId: null,
       projectsLoading: false,
@@ -92,9 +90,9 @@ const useStore = create(
           }
         }),
 
-      // ─────────────────────────────────────────
+      // 
       // COLUMNS SLICE
-      // ─────────────────────────────────────────
+      // 
       // columns[projectId] = Column[]
       columns: {},
       columnsLoading: false,
@@ -127,9 +125,7 @@ const useStore = create(
           }
         }),
 
-      // ─────────────────────────────────────────
       // TASKS SLICE
-      // ─────────────────────────────────────────
       // tasks[projectId] = Task[]  (flat array, tree reconstructed in selectors)
       tasks: {},
       tasksLoading: false,
@@ -146,14 +142,14 @@ const useStore = create(
           state.tasksLoading = loading
         }),
 
-      // Optimistic add — caller provides a temp task with a temp id
+      // Optimistic add  -  caller provides a temp task with a temp id
       optimisticAddTask: (projectId, task) =>
         set((state) => {
           if (!state.tasks[projectId]) state.tasks[projectId] = []
           state.tasks[projectId].push(task)
         }),
 
-      // Confirm add — replace temp task with server response
+      // Confirm add  -  replace temp task with server response
       confirmAddTask: (projectId, tempId, serverTask) =>
         set((state) => {
           const tasks = state.tasks[projectId]
@@ -173,7 +169,7 @@ const useStore = create(
           }
         }),
 
-      // Optimistic update — snapshot original, apply update immediately
+      // Optimistic update  -  snapshot original, apply update immediately
       optimisticUpdateTask: (projectId, taskId, updates) =>
         set((state) => {
           const tasks = state.tasks[projectId]
@@ -185,13 +181,13 @@ const useStore = create(
           Object.assign(tasks[idx], updates)
         }),
 
-      // Confirm update — clear snapshot
+      // Confirm update  -  clear snapshot
       confirmUpdateTask: (taskId) =>
         set((state) => {
           delete state._taskSnapshots[taskId]
         }),
 
-      // Rollback update — restore from snapshot
+      // Rollback update  -  restore from snapshot
       rollbackUpdateTask: (projectId, taskId) =>
         set((state) => {
           const snapshot = state._taskSnapshots[taskId]
@@ -225,7 +221,7 @@ const useStore = create(
           delete state._taskSnapshots[taskId]
         }),
 
-      // Realtime sync — upsert a task received from WebSocket
+      // Realtime sync  -  upsert a task received from WebSocket
       realtimeUpsertTask: (projectId, task) =>
         set((state) => {
           if (!state.tasks[projectId]) state.tasks[projectId] = []
@@ -237,7 +233,7 @@ const useStore = create(
           }
         }),
 
-      // Realtime delete — remove a task from WebSocket DELETE event
+      // Realtime delete  -  remove a task from WebSocket DELETE event
       realtimeDeleteTask: (projectId, taskId) =>
         set((state) => {
           if (state.tasks[projectId]) {
@@ -254,9 +250,9 @@ const useStore = create(
           state.tasks[projectId].push(...tasks)
         }),
 
-      // ─────────────────────────────────────────
+      // 
       // UI SLICE (theme persisted to localStorage)
-      // ─────────────────────────────────────────
+      // 
       theme: (() => {
         try { return localStorage.getItem('tm-theme') || 'light' } catch { return 'light' }
       })(),
@@ -297,9 +293,9 @@ const useStore = create(
           state.wsConnected = connected
         }),
 
-      // ─────────────────────────────────────────
+      // 
       // DEADLINE MODAL SLICE
-      // ─────────────────────────────────────────
+      // 
       deadlineModal: {
         open: false,
         taskId: null,
@@ -317,9 +313,9 @@ const useStore = create(
           state.deadlineModal = { open: false, taskId: null, projectId: null, currentDeadline: null }
         }),
 
-      // ─────────────────────────────────────────
-      // SELECTORS (derived state — computed on access)
-      // ─────────────────────────────────────────
+      // 
+      // SELECTORS (derived state  -  computed on access)
+      // 
 
       // Get tasks for active project grouped by column
       getTasksByColumn: () => {

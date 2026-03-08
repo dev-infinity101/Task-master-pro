@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import TaskMasterLogo from '@/components/ui/TaskMasterLogo'
 
-/* ── Light Surface card ───────────────────────────────── */
+/*  Light Surface card  */
 function Surface({ className, ...props }) {
   return (
     <div
@@ -26,7 +26,7 @@ function Surface({ className, ...props }) {
   )
 }
 
-/* ── Input component ──────────────────────────────────── */
+/*  Input component  */
 function TerminalInput({ className, error, ...props }) {
   return (
     <input
@@ -45,7 +45,7 @@ function TerminalInput({ className, error, ...props }) {
   )
 }
 
-/* ── Primary button ───────────────────────────────────── */
+/*  Primary button  */
 function TerminalButton({ className, disabled, loading, children, ...props }) {
   return (
     <button
@@ -67,7 +67,7 @@ function TerminalButton({ className, disabled, loading, children, ...props }) {
   )
 }
 
-/* ── Field label ──────────────────────────────────────── */
+/*  Field label  */
 function Label({ className, ...props }) {
   return (
     <label

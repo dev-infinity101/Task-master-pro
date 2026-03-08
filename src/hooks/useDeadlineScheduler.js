@@ -10,7 +10,7 @@
  *   regains focus (handles "tab was asleep" edge case).
  *
  * Critical design:
- * - `overdue` is set as a SEPARATE boolean field — status (Todo/In Progress/Done)
+ * - `overdue` is set as a SEPARATE boolean field  -  status (Todo/In Progress/Done)
  *   is NEVER changed to "Overdue". This preserves Kanban column position.
  * - Each "overdue" flip triggers an optimistic Zustand update immediately,
  *   then syncs to Supabase asynchronously.
@@ -27,7 +27,7 @@ export function useDeadlineScheduler() {
 
     const markTaskOverdue = useCallback(async (task, projectId) => {
         const now = new Date().toISOString()
-        // Optimistic update — sets overdue:true in store immediately
+        // Optimistic update  -  sets overdue:true in store immediately
         useStore.getState().optimisticUpdateTask(projectId, task.id, {
             overdue: true,
             overdue_since: now,
@@ -38,7 +38,7 @@ export function useDeadlineScheduler() {
             overdue_since: now,
         })
         if (error) {
-            // Silently rollback — don't toast (user will see it next cycle)
+            // Silently rollback  -  don't toast (user will see it next cycle)
             useStore.getState().rollbackUpdateTask(projectId, task.id)
         } else {
             useStore.getState().confirmUpdateTask(task.id)
@@ -75,7 +75,7 @@ export function useDeadlineScheduler() {
 
         if (pendingTasks.length === 0) return
 
-        // Sort ascending — nearest deadline first
+        // Sort ascending  -  nearest deadline first
         pendingTasks.sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
 
         const nearest = pendingTasks[0]
@@ -133,7 +133,7 @@ export function useDeadlineScheduler() {
         return unsubscribe
     }, [scheduleNext])
 
-    // Tab focus handler — catches "tab was asleep" scenario
+    // Tab focus handler  -  catches "tab was asleep" scenario
     useEffect(() => {
         const handleVisibility = () => {
             if (document.visibilityState === 'visible') {

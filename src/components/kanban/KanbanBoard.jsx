@@ -6,7 +6,7 @@
  * - Drag tasks between columns (cross-column)
  * - Drag tasks within a column (reorder)
  * - Drag overlay (floating card while dragging)
- * - Optimistic updates — moves happen instantly, DB sync in background
+ * - Optimistic updates  -  moves happen instantly, DB sync in background
  * - Keyboard accessible (dnd-kit supports Tab + Space + Arrow keys natively)
  */
 
@@ -40,7 +40,7 @@ export default function KanbanBoard() {
   const columns = getActiveColumns()
   const tasksByColumn = getTasksByColumn()
 
-  // Configure sensors — pointer (mouse/touch) + keyboard
+  // Configure sensors  -  pointer (mouse/touch) + keyboard
   const sensors = useSensors(
     useSensor(PointerSensor, {
       // Require 5px movement before drag starts (prevents accidental drags on click)
@@ -77,7 +77,7 @@ export default function KanbanBoard() {
       if (isOverColumn) {
         targetColumnId = overId
       } else {
-        // Over a task — find its column
+        // Over a task  -  find its column
         for (const [colId, tasks] of Object.entries(tasksByColumn)) {
           if (tasks.some((t) => t.id === activeTaskId)) sourceColumnId = colId
           if (tasks.some((t) => t.id === overId)) targetColumnId = colId
@@ -86,7 +86,7 @@ export default function KanbanBoard() {
 
       if (!targetColumnId || sourceColumnId === targetColumnId) return
 
-      // Cross-column drag — optimistically move task to target column
+      // Cross-column drag  -  optimistically move task to target column
       // We'll calculate exact position on dragEnd
     },
     [columns, tasksByColumn]
@@ -120,13 +120,13 @@ export default function KanbanBoard() {
       let nextTask = null
 
       if (isOverColumn) {
-        // Dropped directly on a column — place at bottom
+        // Dropped directly on a column  -  place at bottom
         targetColumnId = overId
         const columnTasks = tasksByColumn[overId] ?? []
         prevTask = columnTasks[columnTasks.length - 1] ?? null
         nextTask = null
       } else {
-        // Dropped over a task — find its column and position
+        // Dropped over a task  -  find its column and position
         for (const [colId, tasks] of Object.entries(tasksByColumn)) {
           const overIdx = tasks.findIndex((t) => t.id === overId)
           if (overIdx !== -1) {
@@ -177,7 +177,7 @@ export default function KanbanBoard() {
         ))}
       </div>
 
-      {/* Drag Overlay — renders the floating card while dragging */}
+      {/* Drag Overlay  -  renders the floating card while dragging */}
       {createPortal(
         <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)' }}>
           {activeTask ? (

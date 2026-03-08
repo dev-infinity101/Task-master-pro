@@ -1,9 +1,9 @@
 /**
- * useAI.js — AI Assistant hook
+ * useAI.js  -  AI Assistant hook
  *
  * Supports two execution paths:
- *  1. Chat mode (streaming)  — token-by-token SSE from edge function
- *  2. Structured modes (plan | decompose | review | narrate) — single JSON response
+ *  1. Chat mode (streaming)   -  token-by-token SSE from edge function
+ *  2. Structured modes (plan | decompose | review | narrate)  -  single JSON response
  *
  * Streaming state is kept local. Zustand is only touched for task creation.
  */
@@ -19,7 +19,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 /**
  * Get a valid JWT for edge function calls.
- * Reads from Zustand store first — it is always up to date because useAuth.js
+ * Reads from Zustand store first  -  it is always up to date because useAuth.js
  * writes every new session to the store via onAuthStateChange (TOKEN_REFRESHED).
  * Falls back to force-refreshing via Supabase SDK if the store token is stale.
  */
@@ -42,10 +42,10 @@ async function getAccessToken() {
   }
 }
 
-// ─── Edge function headers helper ─────────────────────────────────────────────
+//  Edge function headers helper 
 // Both headers are REQUIRED when calling Supabase Edge Functions via raw fetch():
-//   Authorization: Bearer <user_jwt>  — authenticates the user
-//   apikey: <anon_key>                — identifies the project at the gateway level
+//   Authorization: Bearer <user_jwt>   -  authenticates the user
+//   apikey: <anon_key>                 -  identifies the project at the gateway level
 // Without apikey the Supabase gateway returns 401 before the function even runs.
 function edgeHeaders(token) {
   return {
@@ -55,7 +55,7 @@ function edgeHeaders(token) {
   }
 }
 
-// ─── Helper: call edge with optional 401-retry ────────────────────────────────
+//  Helper: call edge with optional 401-retry 
 async function fetchEdge(body, signal) {
   const makeReq = (token) => fetch(EDGE_BASE, {
     method: 'POST',
@@ -80,7 +80,7 @@ async function fetchEdge(body, signal) {
   return res
 }
 
-// ─── useAI (Chat + Structured) ────────────────────────────────────────────────
+//  useAI (Chat + Structured) 
 
 export function useAI() {
   const [messages, setMessages] = useState([])
@@ -91,7 +91,7 @@ export function useAI() {
   const abortRef = useRef(null)
   const store = useStore()
 
-  // ── Structured mode (plan | decompose | review | narrate) ─────────────────
+  //  Structured mode (plan | decompose | review | narrate) 
 
   const callStructured = useCallback(async (mode, payload = {}) => {
     setIsLoadingStructured(true)
@@ -101,7 +101,7 @@ export function useAI() {
       const res = await fetchEdge({ mode, payload })
 
       if (res.status === 429) {
-        toast.error('Too many requests — please wait a moment.')
+        toast.error('Too many requests  -  please wait a moment.')
         return null
       }
       if (res.status === 401) {
@@ -128,7 +128,7 @@ export function useAI() {
     }
   }, [])
 
-  // ── Chat mode (streaming) ──────────────────────────────────────────────────
+  //  Chat mode (streaming) 
 
   const sendMessage = useCallback(async (userMessage) => {
     if (isStreaming) return
@@ -157,7 +157,7 @@ export function useAI() {
       )
 
       if (res.status === 429) {
-        toast.error('Rate limit reached — please wait a minute.')
+        toast.error('Rate limit reached  -  please wait a minute.')
         setMessages(prev => prev.slice(0, -1))
         return
       }
@@ -242,7 +242,7 @@ export function useAI() {
   }
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+//  Helpers 
 
 function buildContext(store, activeProjectId) {
   const projectTasks = store.tasks[activeProjectId] ?? []

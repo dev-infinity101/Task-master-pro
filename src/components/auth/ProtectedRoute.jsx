@@ -31,7 +31,7 @@ export default function ProtectedRoute({ children }) {
     return () => clearTimeout(t)
   }, [authLoading])
 
-  // Still checking auth — show loader (but limited to MAX_LOAD_MS)
+  // Still checking auth  -  show loader (but limited to MAX_LOAD_MS)
   if (authLoading && !timedOut) return <HourglassLoader />
 
   // Session confirmed → render the protected page

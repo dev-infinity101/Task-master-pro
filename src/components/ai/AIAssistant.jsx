@@ -1,8 +1,8 @@
 /**
- * AIAssistant.jsx — AI Features side panel
+ * AIAssistant.jsx  -  AI Features side panel
  *
  * Automation-only: Daily Plan / Decompose / Weekly Review.
- * Chat mode has been removed — AI is limited to structured outputs only.
+ * Chat mode has been removed  -  AI is limited to structured outputs only.
  * The panel is a global Sheet overlay rendered in App.jsx.
  */
 
@@ -19,7 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 // Lazy-load the AI features panel for bundle efficiency
 const AIFeaturesPanel = lazy(() => import('./AIFeaturesPanel'))
 
-// ── Features Loader ───────────────────────────────────────────────────────────
+//  Features Loader 
 
 function FeaturesLoader() {
   return (
@@ -29,7 +29,7 @@ function FeaturesLoader() {
   )
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
+//  Main Component 
 
 export default function AIAssistant() {
   const { aiPanelOpen, setAIPanelOpen } = useStore(useShallow(s => ({
@@ -41,7 +41,7 @@ export default function AIAssistant() {
     <Sheet open={aiPanelOpen} onOpenChange={setAIPanelOpen}>
       <SheetContent className="flex flex-col p-0 w-full sm:max-w-md border-l border-border bg-background">
 
-        {/* ── Header ─────────────────────────────────────────────── */}
+        {/*  Header  */}
         <SheetHeader className="px-4 pt-4 pb-3 shrink-0 border-b border-border">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center overflow-hidden">
@@ -54,7 +54,7 @@ export default function AIAssistant() {
           </div>
         </SheetHeader>
 
-        {/* ── AI Features ─────────────────────────────────────────── */}
+        {/*  AI Features  */}
         <ScrollArea className="flex-1 px-4 pt-4 pb-4">
           <Suspense fallback={<FeaturesLoader />}>
             <AIFeaturesPanel />

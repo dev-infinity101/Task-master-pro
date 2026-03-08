@@ -75,7 +75,7 @@ export default function YearProgressBanner({ displayName }) {
                 'bg-white border-border text-[#111111]'
             )}
         >
-            {/* Faint background texture — dark only */}
+            {/* Faint background texture  -  dark only */}
             <div className="absolute inset-0 dark:bg-[radial-gradient(ellipse_at_top_left,rgba(34,197,94,0.06),transparent_60%)] pointer-events-none" />
 
             {/* Greeting */}
@@ -83,7 +83,7 @@ export default function YearProgressBanner({ displayName }) {
                 Hi {firstName}, good to see you {greetingEmoji}
             </p>
 
-            {/* Progress bar — CLICKABLE → opens Roadmap */}
+            {/* Progress bar  -  CLICKABLE → opens Roadmap */}
             <div
                 className="relative group/bar cursor-pointer"
                 onMouseEnter={() => setHovered(true)}
@@ -140,7 +140,7 @@ export default function YearProgressBanner({ displayName }) {
                 {hovered && (
                     <div className="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap text-[12px] bg-[#111111] text-white px-3 py-1.5 rounded-lg shadow-lg z-30 pointer-events-none flex items-center gap-1.5">
                         <MapIcon className="w-3 h-3" />
-                        Day {dayOfYear} of {totalDays} — Click for Roadmap
+                        Day {dayOfYear} of {totalDays}  -  Click for Roadmap
                     </div>
                 )}
             </div>
@@ -149,7 +149,7 @@ export default function YearProgressBanner({ displayName }) {
             <div className="mt-3 flex items-center gap-2 flex-wrap justify-between">
                 <span className="text-[14px] dark:text-[#A0AEC0] text-[#555555]">
                     <span className="font-bold text-[#22C55E]">{percent}%</span>{' '}
-                    of {year} complete —{' '}
+                    of {year} complete  - {' '}
                     <span className="font-semibold dark:text-white text-[#111111]">{daysRemaining} days</span>{' '}
                     remaining
                 </span>

@@ -1,8 +1,8 @@
 /**
- * database.js — All Supabase query functions
+ * database.js  -  All Supabase query functions
  *
  * Pattern: every function returns { data, error }
- * Callers handle errors — no silent failures.
+ * Callers handle errors  -  no silent failures.
  * All queries are user-scoped via RLS (no manual user_id filtering needed,
  * but we include it explicitly for query planner hints on indexed columns).
  */
@@ -11,9 +11,9 @@ import { supabase, supabaseConfigured } from './supabase'
 
 const missingSupabase = () => ({ data: null, error: new Error('Supabase is not configured') })
 
-// ─────────────────────────────────────────────
+// 
 // AUTH
-// ─────────────────────────────────────────────
+// 
 
 export async function signUp({ email, password, fullName }) {
   if (!supabaseConfigured) return missingSupabase()
@@ -78,9 +78,9 @@ export async function updatePassword(password) {
   return supabase.auth.updateUser({ password })
 }
 
-// ─────────────────────────────────────────────
+// 
 // PROFILES
-// ─────────────────────────────────────────────
+// 
 
 export async function getProfile(userId) {
   return supabase
@@ -115,9 +115,9 @@ export async function uploadAvatar(userId, file) {
   return { data: { path: uploaded.path, publicUrl: publicUrlData?.publicUrl ?? null }, error: null }
 }
 
-// ─────────────────────────────────────────────
+// 
 // PROJECTS
-// ─────────────────────────────────────────────
+// 
 
 export async function getProjects(userId) {
   const { data, error } = await supabase
@@ -204,9 +204,9 @@ export async function deleteProject(projectId) {
   return supabase.from('projects').delete().eq('id', projectId)
 }
 
-// ─────────────────────────────────────────────
+// 
 // COLUMNS
-// ─────────────────────────────────────────────
+// 
 
 export async function getColumns(projectId) {
   return supabase
@@ -246,9 +246,9 @@ export async function deleteColumn(columnId) {
   return supabase.from('columns').delete().eq('id', columnId)
 }
 
-// ─────────────────────────────────────────────
+// 
 // TASKS
-// ─────────────────────────────────────────────
+// 
 
 /**
  * Fetch all top-level tasks for a project, with their subtasks.
@@ -401,9 +401,9 @@ export async function getTodaysTasks(userId) {
     .order('due_date', { ascending: true })
 }
 
-// ─────────────────────────────────────────────
+// 
 // AI CONVERSATIONS
-// ─────────────────────────────────────────────
+// 
 
 export async function getAIConversations(userId) {
   return supabase
@@ -448,9 +448,9 @@ export async function deleteAIConversation(conversationId) {
   return supabase.from('ai_conversations').delete().eq('id', conversationId)
 }
 
-// ─────────────────────────────────────────────
+// 
 // ROADMAP MONTHS
-// ─────────────────────────────────────────────
+// 
 
 /**
  * Fetch all roadmap months for a given project + year.

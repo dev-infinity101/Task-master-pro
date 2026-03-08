@@ -1,12 +1,12 @@
 /**
- * useAuth.js — Global auth initializer (runs once in App.jsx)
+ * useAuth.js  -  Global auth initializer (runs once in App.jsx)
  *
  * KEY FIX vs previous version:
  *  - authLoading is set to false by setSession() itself (store reducer)
  *    so it can NEVER get stuck. fetchProfile is now fire-and-forget AFTER
- *    authLoading is cleared — profile missing just means avatar shows initials.
- *  - SIGNED_IN and TOKEN_REFRESHED both just call setSession() — no spinner.
- *  - SIGNED_OUT calls clearAuth() — authLoading goes false immediately.
+ *    authLoading is cleared  -  profile missing just means avatar shows initials.
+ *  - SIGNED_IN and TOKEN_REFRESHED both just call setSession()  -  no spinner.
+ *  - SIGNED_OUT calls clearAuth()  -  authLoading goes false immediately.
  *  - No complex event-type branching that can deadlock.
  */
 
@@ -40,7 +40,7 @@ export function useAuth() {
       localStorage.removeItem('taskmaster-auth-code-verifier')
     } catch { /* private browsing */ }
 
-    // ── 1. Restore persisted session immediately ─────────────────────────
+    //  1. Restore persisted session immediately 
     // setSession() already sets authLoading = false in the store reducer,
     // so the loader clears as soon as we have a definitive answer.
     supabase.auth.getSession().then(({ data, error }) => {
@@ -52,7 +52,7 @@ export function useAuth() {
       if (session?.user) fetchProfile(session.user)  // fire-and-forget
     }).catch(() => { if (mountedRef.current) clearAuth() })
 
-    // ── 2. Live listener for all subsequent auth changes ─────────────────
+    //  2. Live listener for all subsequent auth changes 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (!mountedRef.current) return
@@ -72,7 +72,7 @@ export function useAuth() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ── Profile fetch / auto-create ──────────────────────────────────────────
+  //  Profile fetch / auto-create 
   async function fetchProfile(user) {
     try {
       if (!user?.id) return
@@ -84,7 +84,7 @@ export function useAuth() {
 
       if (data) { setProfile(data); return }
 
-      // Profile row doesn't exist yet — create it
+      // Profile row doesn't exist yet  -  create it
       const fullName =
         user.user_metadata?.full_name ??
         user.user_metadata?.name ??
@@ -96,7 +96,7 @@ export function useAuth() {
 
       if (mountedRef.current && created) setProfile(created)
     } catch {
-      // Non-fatal — profile missing just means no avatar name, dashboard still works
+      // Non-fatal  -  profile missing just means no avatar name, dashboard still works
     }
   }
 
