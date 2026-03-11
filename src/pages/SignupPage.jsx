@@ -96,8 +96,30 @@ export default function SignupPage() {
 
   if (session) return <Navigate to="/dashboard" replace />
 
+  const ALLOWED_DOMAINS = [
+    'gmail.com',
+    'outlook.com',
+    'hotmail.com',
+    'yahoo.com',
+    'icloud.com',
+    'proton.me',
+    'protonmail.com',
+    'live.com',
+    'msn.com',
+  ]
+
   const onSubmit = async ({ fullName, email, password }) => {
     setIsLoading(true)
+
+    const emailDomain = email.split('@')[1]?.toLowerCase()
+    
+    // Check if the email domain is in the allowed list
+    if (!ALLOWED_DOMAINS.includes(emailDomain)) {
+      setIsLoading(false)
+      toast.error('ACCESS DENIED: Please use a valid email. We do not allow clone or temp mail services. Use Gmail, Outlook, or another authentic provider.')
+      return
+    }
+
     const { error } = await signUp({ email, password, fullName })
     setIsLoading(false)
 
