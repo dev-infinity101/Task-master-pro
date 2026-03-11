@@ -129,6 +129,7 @@ const useStore = create(
       // tasks[projectId] = Task[]  (flat array, tree reconstructed in selectors)
       tasks: {},
       tasksLoading: false,
+      isSyncing: false,
       // Snapshot for optimistic rollback: { [taskId]: Task }
       _taskSnapshots: {},
 
@@ -140,6 +141,11 @@ const useStore = create(
       setTasksLoading: (loading) =>
         set((state) => {
           state.tasksLoading = loading
+        }),
+
+      setIsSyncing: (syncing) =>
+        set((state) => {
+          state.isSyncing = syncing
         }),
 
       // Optimistic add  -  caller provides a temp task with a temp id

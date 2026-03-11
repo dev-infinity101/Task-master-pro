@@ -201,6 +201,12 @@ export async function updateProject(projectId, updates) {
 }
 
 export async function deleteProject(projectId) {
+  // Graceful sequential cascading delete 
+  // 1. Delete tasks
+  await supabase.from('tasks').delete().eq('project_id', projectId)
+  // 2. Delete columns
+  await supabase.from('columns').delete().eq('project_id', projectId)
+  // 3. Delete project itself
   return supabase.from('projects').delete().eq('id', projectId)
 }
 

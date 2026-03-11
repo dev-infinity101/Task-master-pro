@@ -16,6 +16,8 @@ import {
   Map,
   PanelLeftClose,
   PanelLeftOpen,
+  Trash2,
+  MoreVertical,
 } from "lucide-react";
 import EnergyCubeIcon from "../components/ui/EnergyCubeIcon";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +26,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useRealtimeSync } from "../hooks/useRealtimeSync";
 import {
   createProjectWithDefaults,
+  deleteProject,
   signOut as dbSignOut,
 } from "../lib/database";
 import KanbanBoard from "../components/kanban/KanbanBoard";
@@ -120,6 +123,8 @@ function NavItem({ icon: Icon, label, active, onClick, badge }) {
 
 export default function Dashboard() {
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
+  const [deleteProjectDialogOpen, setDeleteProjectDialogOpen] = useState(false);
+  const [isDeletingProject, setIsDeletingProject] = useState(false);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectColor, setNewProjectColor] = useState(PROJECT_COLORS[0]);
@@ -136,10 +141,12 @@ export default function Dashboard() {
     activeProjectId,
     tasks,
     wsConnected,
+    isSyncing,
     clearAuth,
     setProjects,
     setColumns,
     setActiveProject,
+    removeProject,
     setCommandPaletteOpen,
     getActiveProject,
   } = useStore(
@@ -150,10 +157,12 @@ export default function Dashboard() {
       activeProjectId: s.activeProjectId,
       tasks: s.tasks,
       wsConnected: s.wsConnected,
+      isSyncing: s.isSyncing,
       clearAuth: s.clearAuth,
       setProjects: s.setProjects,
       setColumns: s.setColumns,
       setActiveProject: s.setActiveProject,
+      removeProject: s.removeProject,
       setCommandPaletteOpen: s.setCommandPaletteOpen,
       getActiveProject: s.getActiveProject,
     })),
@@ -216,6 +225,26 @@ export default function Dashboard() {
       toast.error("Failed to create project");
     } finally {
       setIsCreatingProject(false);
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    if (!activeProjectId) return;
+    setIsDeletingProject(true);
+    try {
+      const { error } = await deleteProject(activeProjectId);
+      if (error) {
+        toast.error(error?.message ?? "Failed to delete project");
+        return;
+      }
+      removeProject(activeProjectId);
+      setDeleteProjectDialogOpen(false);
+      toast.success("Project deleted");
+    } catch (error) {
+      console.error("Project delete error:", error);
+      toast.error("Failed to delete project");
+    } finally {
+      setIsDeletingProject(false);
     }
   };
 
@@ -313,11 +342,10 @@ export default function Dashboard() {
                           <button
                             key={color}
                             type="button"
-                            className={`h-7 w-7 rounded-full border-2 transition-all ${
-                              newProjectColor === color
-                                ? "border-[#111111] scale-110"
-                                : "border-transparent"
-                            }`}
+                            className={`h-7 w-7 rounded-full border-2 transition-all ${newProjectColor === color
+                              ? "border-[#111111] scale-110"
+                              : "border-transparent"
+                              }`}
                             style={{ backgroundColor: color }}
                             onClick={() => setNewProjectColor(color)}
                             aria-label={`Set project color ${color}`}
@@ -489,6 +517,21 @@ export default function Dashboard() {
             <h1 className="font-bold text-[15px] md:text-[17px] tracking-tight text-[#111111] dark:text-foreground truncate">
               {activeProject?.name ?? "Select a Project"}
             </h1>
+            {activeProject && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-50 hover:opacity-100 transition-opacity">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer" onClick={() => setDeleteProjectDialogOpen(true)}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Project
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             {overdueTasks.length > 0 && (
               <span className="text-[10px] md:text-xs font-semibold px-1.5 md:px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-500/10 text-red-500 border border-red-100 dark:border-red-500/20 shrink-0">
                 {overdueTasks.length}{" "}
@@ -558,6 +601,37 @@ export default function Dashboard() {
             </span>
           </div>
         </header>
+
+        {/* Sync Loader Overlay */}
+        {isSyncing && (
+          <div className="fixed bottom-4 right-4 z-50 pointer-events-none fade-in slide-in-from-bottom-5 animate-in duration-300">
+            <div className="bg-card text-card-foreground border border-border shadow-soft rounded-lg p-3 flex items-center gap-3">
+              <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+              <span className="text-xs font-semibold mr-2 opacity-80">Syncing...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Project Dialog */}
+        <Dialog open={deleteProjectDialogOpen} onOpenChange={setDeleteProjectDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Project</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this project? All tasks and columns inside this project will be permanently removed. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="button" variant="secondary" onClick={() => setDeleteProjectDialogOpen(false)} disabled={isDeletingProject}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteProject} disabled={isDeletingProject}>
+                {isDeletingProject && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Delete Project
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/*  Board area  */}
         <main className="flex-1 overflow-hidden relative bg-[#F7F8FA] dark:bg-[#0F0F0F]">

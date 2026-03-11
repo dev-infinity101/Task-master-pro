@@ -18,7 +18,6 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { DayPicker } from 'react-day-picker'
 import {
     format, addDays, setHours, setMinutes, isToday,
 } from 'date-fns'
@@ -27,40 +26,9 @@ import { cn } from '@/lib/utils'
 import useStore from '../../store/store'
 import { useShallow } from 'zustand/react/shallow'
 import { useTasks } from '../../hooks/useTasks'
+import { Calendar } from '@/components/ui/calendar'
 
-/*  Calendar classNames for react-day-picker v9  */
-const DAY_PICKER_CLASSES = {
-    root: 'w-full',
-    months: 'flex flex-col',
-    month: 'space-y-2 w-full',
-    month_caption: 'flex justify-center pt-1 relative items-center mb-1',
-    caption_label: 'text-sm font-semibold text-foreground',
-    nav: 'absolute inset-x-0 top-0 flex items-center justify-between h-7 px-1',
-    button_previous: cn(
-        'h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 transition-opacity',
-        'flex items-center justify-center rounded-md hover:bg-muted dark:hover:bg-white/10 text-foreground'
-    ),
-    button_next: cn(
-        'h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 transition-opacity',
-        'flex items-center justify-center rounded-md hover:bg-muted dark:hover:bg-white/10 text-foreground'
-    ),
-    month_grid: 'w-full border-collapse',
-    weekdays: 'flex',
-    weekday: 'text-muted-foreground rounded-md w-8 font-normal text-[0.7rem] text-center',
-    weeks: 'w-full',
-    week: 'flex w-full mt-1',
-    day: 'h-8 w-8 text-center p-0 relative focus-within:relative focus-within:z-20',
-    day_button: cn(
-        'h-8 w-8 p-0 font-normal text-xs text-foreground/80 rounded-md w-full',
-        'hover:bg-muted hover:text-foreground transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-    ),
-    selected: '[&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:hover:bg-primary/90 [&>button]:rounded-md [&>button]:font-semibold',
-    today: '[&>button]:ring-1 [&>button]:ring-primary/60 [&>button]:text-foreground [&>button]:font-semibold',
-    outside: '[&>button]:text-muted-foreground/50 [&>button]:opacity-50',
-    disabled: '[&>button]:text-muted-foreground/30 [&>button]:opacity-30',
-    hidden: 'invisible',
-}
+
 
 function endOfDay(date) {
     return setMinutes(setHours(date, 23), 59)
@@ -143,10 +111,10 @@ export default function DeadlineModal() {
         await updateTask(taskId, projectId, {
             deadline: iso,
             deadline_type: 'manual',
-            overdue: new Date(iso).getTime() <= Date.now(),
+            overdue: new Date(iso).getTime() <= Date.now()
         })
         closeDeadlineModal()
-    }, [selectedDate, hour, minute, ampm, taskId, projectId])
+    }, [selectedDate, hour, minute, ampm, taskId, projectId, updateTask, closeDeadlineModal])
 
     const handleQuick = useCallback(async (date) => {
         const iso = endOfDay(date).toISOString()
@@ -260,15 +228,15 @@ export default function DeadlineModal() {
                 </div>
 
                 {/* Calendar */}
-                <div className="px-2 pb-1">
-                    <DayPicker
+                <div className="px-2 pb-1 flex justify-center">
+                    <Calendar
                         mode="single"
                         selected={selectedDate ?? undefined}
                         onSelect={handleSelectDay}
                         month={calMonth}
                         onMonthChange={setCalMonth}
-                        classNames={DAY_PICKER_CLASSES}
                         showOutsideDays
+                        className="p-1 pointer-events-auto"
                     />
                 </div>
 

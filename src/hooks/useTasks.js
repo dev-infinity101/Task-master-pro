@@ -70,8 +70,10 @@ export function useTasks() {
       }
 
       store.optimisticAddTask(projectId, optimisticTask)
+      store.setIsSyncing(true)
 
       const { data, error } = await dbCreateTask(userId, projectId, columnId, taskData)
+      store.setIsSyncing(false)
 
       if (error) {
         store.rollbackAddTask(projectId, tempId)
@@ -91,8 +93,10 @@ export function useTasks() {
     async (taskId, projectId, updates) => {
       store.optimisticUpdateTask(projectId, taskId, updates)
       markOwnUpdate(taskId)
+      store.setIsSyncing(true)
 
       const { data, error } = await dbUpdateTask(taskId, updates)
+      store.setIsSyncing(false)
 
       if (error) {
         store.rollbackUpdateTask(projectId, taskId)
@@ -109,8 +113,10 @@ export function useTasks() {
   const deleteTask = useCallback(
     async (taskId, projectId) => {
       store.optimisticDeleteTask(projectId, taskId)
+      store.setIsSyncing(true)
 
       const { error } = await dbDeleteTask(taskId)
+      store.setIsSyncing(false)
 
       if (error) {
         store.rollbackDeleteTask(projectId, taskId)
@@ -137,8 +143,10 @@ export function useTasks() {
         position: newPosition,
       })
       markOwnUpdate(taskId)
+      store.setIsSyncing(true)
 
       const { error } = await dbMoveTask(taskId, newColumnId, newPosition)
+      store.setIsSyncing(false)
 
       if (error) {
         store.rollbackUpdateTask(projectId, taskId)
